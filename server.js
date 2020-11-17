@@ -16,6 +16,14 @@ playersRoom = new Map();
 rooms = new Map();
 
 io.on("connection", (socket) => {
+
+    /**
+     * When client socket emit that it joins a room it will test if the asked room exist, two cases :
+     *  - it doesn't exist and then it will create one
+     *  - it exists and then it will attempt to join it
+     * 
+     * ! Care joining a room can fail, it will then emit an error signal with the error message 
+     */
     socket.on("joinRoom", (payload) => {
         let roomID = payload.roomID;
         let name = payload.name || "Bob";
@@ -29,9 +37,10 @@ io.on("connection", (socket) => {
 
                 room.join(socket.id, name);
                 playersRoom.set(socket.id, roomID);
-                // console.log(`Joined room ${roomID}`);
             } catch (err) {
                 socket.emit("error", err.message);
+
+                return;
             }
         } else { // create room if doesn't exist
             room = game.game(roomID);
@@ -39,12 +48,34 @@ io.on("connection", (socket) => {
             playersRoom.set(socket.id, roomID);
             
             room.join(socket.id, name);
-            // console.log(`Created and joined room ${roomID}`);
         }
 
         socket.join(roomID);
 
+        socket.emit("successJoin", {gamestate: room.state});
+
         io.to(roomID).emit("updatePlayers", room.playersList());
+    });
+
+    socket.on("startGame", () => {
+        let roomID = playersRoom.get(socket.id);
+        let room = rooms.get(roomID);
+
+        if (room.admin !== socket.id) {
+            socket.emit("error", "You're not the room's admin, you can't start the game !");
+            return;
+        }
+
+        try {
+            room.startGame();
+
+            io.to(roomID).emit("gameStart", {
+                gamestate: room.state
+            });
+        } catch (err) {
+            socket.emit("error", err.message);
+            return;
+        }
     });
 
     socket.on("disconnect", () => {

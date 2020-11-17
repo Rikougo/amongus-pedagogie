@@ -1,8 +1,8 @@
 // STATE OF THE GAME
-const WAITING = 0;
-const PLAYING = 1;
-const MEETING = 2;
-const ENDED   = 3;
+const WAITING = "WAITING";
+const PLAYING = "PLAYING";
+const MEETING = "MEETING";
+const ENDED   = "ENDING";
 
 // MAX PLAYER LIMIT (to change)
 const LIMIT = 6;
@@ -33,8 +33,6 @@ class Game {
         this.log(`Player ${name} [${playerSocketId}] joined the room`);
 
         if (this.players.size === 1) this.admin = playerSocketId;
-
-        this.process();
     }
 
     /**
@@ -53,14 +51,13 @@ class Game {
         }
 
         this.log(`Player ${name} [${playerSocketId}] left the room`);
-
-        this.process();
     }
 
     playersList() {
         let list = [];
 
         this.players.forEach(player => list.push({
+            id: player.id,
             name: player.name,
             admin: player.id === this.admin
         }));
@@ -77,27 +74,13 @@ class Game {
 
         // CHANGE STATE
         this.state = PLAYING;
-
-        // UPDATE GAME
-        this.process();
     }
 
     /**
      * @return {boolean} Says if game has no player inside
      */
-    isEmpty(){
+    isEmpty() {
         return this.players.size === 0;
-    }
-
-    /**
-     * Most of the work is done here, each modification method
-     * must call process to commit all the changes it implies
-     * (e.g a player leave ? must see if it has enough players left)
-     */
-    process() {
-        if (this.state === WAITING) {
-
-        }
     }
 
     /**

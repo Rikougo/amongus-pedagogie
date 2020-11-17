@@ -1,5 +1,54 @@
+* {
+    margin: 0;
+}
+
+.container {
+    min-width: 100%;
+    min-height: 100%;
+
+    display: flex;
+    flex-direction: row;
+}
+
+.left-board {
+    border-right: 1px solid black;
+}
+
+#players {
+    padding-inline-start: 0;
+    padding: 1em 1em 0 0;
+
+    display: flex;
+    flex-direction: column;
+
+    align-items: flex-end;
+}
+
 .player {
     display: flex;
     flex-direction: row;
     align-items: center;
+}
+
+.player img {
+    padding: 0.5em;
+}
+
+.player .self {
+    font-weight: bold;
+}
+
+.main-board {
+    display: flex;
+    flex-direction: column;
+
+    justify-content: center;
+    align-items: center;
+    flex-grow: 1;
+
+    text-align: center;
+}
+
+#state {
+    color: rgb(201, 201, 201);
 }

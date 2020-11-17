@@ -7,11 +7,16 @@ append headScripts
     script(src="socket.io/socket.io.js")
 
 append content
-    h1 #{roomID}
+    .container
+        .left-board
+            ul#players
 
-    div#messageList
-
-    ul#players
+        .main-board
+            h1#roomID #{roomID}
+            
+            .stateGroup
+                p#state CONNECTING
+                button#startGame(disabled) Lancer la partie
 
 append bodyScripts
     script. 
