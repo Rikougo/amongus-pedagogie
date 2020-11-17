@@ -1,0 +1,17 @@
+extends template
+
+append headScripts
+    script(src="socket.io/socket.io.js")
+
+append content
+    h1 #{roomID}
+
+    div#messageList
+
+    input#message(type="text", name="message", placeholder="Ecrivez votre message...")
+    input#sendMessage(type="button", value="Envoyer")
+
+append bodyScripts
+    script. 
+        let roomID = "#{roomID}";
+    script(src="/scripts/clientRoom.js")
