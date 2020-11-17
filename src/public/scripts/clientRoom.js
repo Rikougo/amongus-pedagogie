@@ -5,20 +5,16 @@ $(document).ready(() => {
         socket.emit("joinRoom", {roomID: roomID});
     });
 
-    socket.on("message", (message) => {
-        $("#messageList").append(`<p>${message}</p>`);
-    });
+    socket.on("updatePlayers", (players) => {
+        $("#players").empty();
 
-    $("#sendMessage").on("click", () => {
-        if ($("#message").length > 0) {
-            $("#messageList").append(`<p>${$("#message").val()}</p>`)
+        players.forEach((value) => {
+            let playerDiv = $("<div class='player'></div>");
 
-            socket.emit("message", {
-                roomID: roomID,
-                message: $("#message").val()
-            });
+            if (value.admin) $(playerDiv).append("<img src='/svg/shield.svg' height='20px' width='20px' />");
+            $(playerDiv).append(`<div class='name'>${value.name}</div>`);
 
-            $("#message").val("");
-        }
+            $(playerDiv).appendTo('#players');
+        });
     });
 });

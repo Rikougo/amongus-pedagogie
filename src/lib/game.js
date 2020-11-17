@@ -6,6 +6,7 @@ const ENDED   = 3;
 
 // MAX PLAYER LIMIT (to change)
 const LIMIT = 6;
+const MINIMUM = 4;
 
 class Game {
     constructor(roomID) {
@@ -27,7 +28,11 @@ class Game {
         if (this.players.length === LIMIT) 
             throw Error(`Full room error at room ${this.id}`);
         
-        this.players[playerSocketId] = new Player(playerSocketId, name);
+        this.players.set(playerSocketId, new Player(playerSocketId, name));
+
+        this.log(`Player ${name} [${playerSocketId}] joined the room`);
+
+        if (this.players.size === 1) this.admin = playerSocketId;
 
         this.process();
     }
@@ -37,13 +42,51 @@ class Game {
      * @param {string} playerSocketId 
      */
     leave(playerSocketId) {
+        let name = this.players.get(playerSocketId).name;
+
         this.players.delete(playerSocketId);
+
+        // deleguate admin role
+        if (!this.players.has(this.admin) && this.players.size >= 1) {
+            this.log("Changed admin");
+            this.admin = this.players.keys().next().value;
+        }
+
+        this.log(`Player ${name} [${playerSocketId}] left the room`);
 
         this.process();
     }
 
+    playersList() {
+        let list = [];
+
+        this.players.forEach(player => list.push({
+            name: player.name,
+            admin: player.id === this.admin
+        }));
+
+        return list;
+    }
+
     startGame() {
+        if (this.players.size < MINIMUM) {
+            throw Error(`Can't start game with less than ${MINIMUM} players.`);
+        }
+
+        // GIVE ROLES
+
+        // CHANGE STATE
         this.state = PLAYING;
+
+        // UPDATE GAME
+        this.process();
+    }
+
+    /**
+     * @return {boolean} Says if game has no player inside
+     */
+    isEmpty(){
+        return this.players.size === 0;
     }
 
     /**
@@ -56,6 +99,18 @@ class Game {
 
         }
     }
+
+    /**
+     * Dev purpose to help track what's going on
+     * @param {string} message 
+     */
+    log(message) {
+        console.log(`[${this.id} ROOM] ${message}`);
+    }
+
+    reset() {
+
+    }
 }
 
 class Player {
@@ -64,11 +119,19 @@ class Player {
         this.name = name;
         this.playedCodes = [];
     }
+
+    /**
+     * give a role for the player
+     * @param {number} role 0 for crewmate, 1 for impostor
+     */
+    assignRole(role) {
+        this.role = role;
+    }
 }
 
 module.exports = {
     player: (name) => new Player(name),
-    game: () => new Game(),
+    game: (id) => new Game(id),
     WAITING: WAITING,
     PLAYING: PLAYING,
     MEETING: MEETING,

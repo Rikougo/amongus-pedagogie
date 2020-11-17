@@ -1,5 +1,8 @@
 extends template
 
+append styles
+    link(rel="stylesheet", href="/style/room.css")
+
 append headScripts
     script(src="socket.io/socket.io.js")
 
@@ -8,8 +11,7 @@ append content
 
     div#messageList
 
-    input#message(type="text", name="message", placeholder="Ecrivez votre message...")
-    input#sendMessage(type="button", value="Envoyer")
+    ul#players
 
 append bodyScripts
     script. 

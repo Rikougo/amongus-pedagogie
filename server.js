@@ -12,42 +12,58 @@ app.use("/", express.static( __dirname +  "/src/public/"));
 app.use("/", require("./src/routes/mainRoute"));
 app.use("/api", require("./src/routes/api"));
 
+playersRoom = new Map();
 rooms = new Map();
 
 io.on("connection", (socket) => {
-    console.log(`user connected (${socket.id})`);
-
     socket.on("joinRoom", (payload) => {
-        console.log(payload);
-
-        let roomID = payload.roomID
+        let roomID = payload.roomID;
         let name = payload.name || "Bob";
 
+        let room;
+
+        // room exists
         if (rooms.has(roomID)) {
             try {
-                rooms.get(roomID).join(socket.id, name);
-                console.log(`Joined room ${roomID}`);
+                room = rooms.get(roomID);
+
+                room.join(socket.id, name);
+                playersRoom.set(socket.id, roomID);
+                // console.log(`Joined room ${roomID}`);
             } catch (err) {
                 socket.emit("error", err.message);
             }
-        } else {
-            console.log(`Created and joined room ${roomID}`);
-            let room = game.game();
-            rooms[roomID] = room;
-
+        } else { // create room if doesn't exist
+            room = game.game(roomID);
+            rooms.set(roomID, room);
+            playersRoom.set(socket.id, roomID);
+            
             room.join(socket.id, name);
+            // console.log(`Created and joined room ${roomID}`);
         }
+
         socket.join(roomID);
-    });
 
-    socket.on("message", (payload) => {
-        console.log(payload);
-
-        socket.to(payload.roomID).emit("message", payload.message);
+        io.to(roomID).emit("updatePlayers", room.playersList());
     });
 
     socket.on("disconnect", () => {
-        console.log("user disconnected");
+        let roomID = playersRoom.get(socket.id);
+
+        // leave room
+        if (rooms.has(roomID)) {
+            let room = rooms.get(roomID);
+
+            room.leave(socket.id);
+
+            if (room.isEmpty()) {
+                room.reset();
+            } else {
+                io.to(roomID).emit("updatePlayers", room.playersList());
+            }
+        } else { // strange behavior here should not be able for a player to not have a room attached to
+            console.warn("Trying to remove from a non-existing room.");
+        }
     });
 });
 
