@@ -8,7 +8,7 @@ append headScripts
 
 append content
     .container
-        .left-board
+        .left-board.side-pannel
             ul#players
 
         .main-board
@@ -18,7 +18,11 @@ append content
                 p#state CONNECTING
                 button#startGame(disabled) Lancer la partie
 
+        .right-board.side-pannel
+            ul#codesFeed
+
 append bodyScripts
     script. 
         let roomID = "#{roomID}";
+        let name = "#{name}";
     script(src="/scripts/clientRoom.js")

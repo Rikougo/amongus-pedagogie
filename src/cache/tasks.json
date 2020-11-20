@@ -1,0 +1,41 @@
+{
+    "test" : {
+        "crewmates": {
+            "A1" : {
+                "code": "TESTA1"
+            },
+            "A2" : {
+                "code": "TESTA2"
+            },
+            "A3" : {
+                "code": "TESTA3"
+            },
+            "A4" : {
+                "code": "TESTA4"
+            },
+            "A5" : {
+                "code": "TESTA5"
+            },
+            "A6" : {
+                "code": "TESTA6"
+            }
+        },
+        "impostors": [
+            {
+                "code": "TESTP1"
+            },
+            {
+                "code": "TESTP2"
+            },
+            {
+                "code": "TESTP3"
+            },
+            {
+                "code": "TESTP4"
+            },
+            {
+                "code": "TESTP5"
+            }
+        ]
+    }
+}

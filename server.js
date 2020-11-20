@@ -1,9 +1,19 @@
+const fs = require("fs");
 const express = require("express");
+
 const app = express();
 const http = require("http").createServer(app);
 const io = require("socket.io")(http);
 
 const game = require("./src/lib/game");
+
+function updateTasksData() {
+    const TASKS_FILE = "./src/cache/tasks.json";
+
+    return JSON.parse(fs.readFileSync(TASKS_FILE));
+}
+
+// EXPRESS STUFF
 
 app.set("view engine", "pug")
 app.set("views", __dirname + "/src/views/");
@@ -12,11 +22,15 @@ app.use("/", express.static( __dirname +  "/src/public/"));
 app.use("/", require("./src/routes/mainRoute"));
 app.use("/api", require("./src/routes/api"));
 
-playersRoom = new Map();
-rooms = new Map();
+// SOCKET STUFF
+// game server logic here
+
+const playersRoom = new Map();
+const rooms = new Map();
+
+let tasksData = updateTasksData();
 
 io.on("connection", (socket) => {
-
     /**
      * When client socket emit that it joins a room it will test if the asked room exist, two cases :
      *  - it doesn't exist and then it will create one
@@ -43,7 +57,7 @@ io.on("connection", (socket) => {
                 return;
             }
         } else { // create room if doesn't exist
-            room = game.game(roomID);
+            room = game.game(roomID, tasksData);
             rooms.set(roomID, room);
             playersRoom.set(socket.id, roomID);
             
@@ -51,10 +65,18 @@ io.on("connection", (socket) => {
         }
 
         socket.join(roomID);
+        
+        let playersList = room.playersList();
 
-        socket.emit("successJoin", {gamestate: room.state});
+        socket.emit("successJoin", {
+            gamestate: room.state,
+            players: playersList
+        });
 
-        io.to(roomID).emit("updatePlayers", room.playersList());
+        socket.to(roomID).emit("updatePlayers", {
+            players: playersList
+        });
+
     });
 
     socket.on("startGame", () => {
@@ -69,12 +91,37 @@ io.on("connection", (socket) => {
         try {
             room.startGame();
 
-            io.to(roomID).emit("gameStart", {
-                gamestate: room.state
+            // signal to each player individually with role
+            room.players.forEach((v, k) => {
+                console.log(v);
+
+                io.of("/").sockets.get(k).emit("gameStart", {
+                    gamestate: room.state,
+                    role: v.role,
+                    tasks: v.tasks
+                })
             });
         } catch (err) {
             socket.emit("error", err.message);
             return;
+        }
+    });
+
+    socket.on("crewmateTask", (payload) => {
+        let roomID = playersRoom.get(socket.id);
+        let room = rooms.get(roomID);
+
+        if (room.players.get(socket.id).role !== "crewmate") {
+            socket.emit("error", "You're not a crewmate, sir. Tryin' to cheat ?");
+        }
+    });
+
+    socket.on("impostorTask", (payload) => {
+        let roomID = playersRoom.get(socket.id);
+        let room = rooms.get(roomID);
+
+        if (room.players.get(socket.id).role !== "impostor") {
+            socket.emit("error", "You're not an impostor, sir. Tryin' to cheat ?");
         }
     });
 
@@ -90,7 +137,9 @@ io.on("connection", (socket) => {
             if (room.isEmpty()) {
                 room.reset();
             } else {
-                io.to(roomID).emit("updatePlayers", room.playersList());
+                socket.to(roomID).emit("updatePlayers", {
+                    players: room.playersList()
+                });
             }
         } else { // strange behavior here should not be able for a player to not have a room attached to
             console.warn("Trying to remove from a non-existing room.");

@@ -1,8 +1,10 @@
 extends template
 
 append content
-    button#createRoom Créer
-    button#joinRoom Rejoindre
+    form(action="/api/createRoom", method="get")
+        input#name(type="text", name="name" required)
+        button#createRoom Créer
+    //- button#joinRoom Rejoindre
 
 append bodyScripts
     script(src="/scripts/clientHome.js")

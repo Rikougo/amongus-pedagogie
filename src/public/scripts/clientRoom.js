@@ -1,17 +1,6 @@
 $(document).ready(() => {
     const socket = io();
 
-    socket.on("connect", () => {
-        socket.emit("joinRoom", {roomID: roomID});
-    });
-
-    /**
-     * 
-     */
-    socket.on("successJoin", (payload) => {
-        $("#state").html(payload.gamestate);
-    })
-
     /**
      * Player is here a list of object with :
      *   - {string} name
@@ -19,7 +8,7 @@ $(document).ready(() => {
      * 
      * It updates left players list and set start button disabled or enabled
      */
-    socket.on("updatePlayers", (players) => {
+    function updatePlayersList(players) {
         $("#players").empty();
 
         players.forEach((value) => {
@@ -37,11 +26,41 @@ $(document).ready(() => {
 
             $(playerDiv).appendTo('#players');
         });
+    }
+
+    /**
+     * 
+     * @param {string} gamestate 
+     */
+    function changeState(gamestate) {
+        $("#state").html(gamestate);
+    }
+
+    /**
+     * 
+     * @param {array} tasks array of task that has the code of the taks and other infos
+     */
+    function updatePlayerTasks(tasks) {
+        
+    }
+
+    socket.on("connect", () => {
+        socket.emit("joinRoom", {roomID: roomID, name: name});
+    });
+
+    socket.on("successJoin", (payload) => {
+        changeState(payload.gamestate);
+
+        updatePlayersList(payload.players);
+    })
+
+    socket.on("updatePlayers", (payload) => {
+        updatePlayersList(payload.players);
     });
 
     socket.on("gameStart", (payload) => {
-        console.log("yo");
-        $("#state").html(payload.gamestate);
+        changeState(payload.gamestate);
+        console.log(payload.tasks);
     });
 
     $("#startGame").click(() => {

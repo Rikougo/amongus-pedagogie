@@ -7,7 +7,11 @@ router.get("/", (req, res) => {
 });
 
 router.get("/:id", (req, res) => {
-    res.render("room", {roomID: req.params.id});
+    res.render("room", {
+        tiutle: req.params.id,
+        roomID: req.params.id,
+        name: req.query.name
+    });
 });
 
 module.exports = router;
