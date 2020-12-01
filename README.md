@@ -1,15 +1,15 @@
 # Among us - pédagogie
 
 ## TODO Room side
-- [ ] Création de room (gestion par socket)
-- [ ] Cycle de partie (ATTENTE - JEU - MEETING - FIN)
+- [X] Création de room (gestion par socket)
+- [X] Cycle de partie (ATTENTE - JEU - MEETING - FIN)
 - [ ] Envoie d'un code par un joueur
 - [ ] Alerte aux autres joueurs
 - [ ] Buzz à partir de X codes rentrés
 - [ ] Victoire fin de tâches ou plus de joueurs en vie
 
 ## TODO Client
-- [ ] Page d'accueil : Nouvelle partie / Rejoindre
+- [X] Page d'accueil : Nouvelle partie / Rejoindre
 - [ ] Ecran d'information de début de partie (crewmate/impostor)
 - [ ] Page d'exercices -> page de code
 - [ ] Page de meeting
@@ -22,9 +22,9 @@ Les évenements (abstraits) peuvent avoir différentes formes :
 - Les évenements envoyés par le serveur pour répondre à un client spécifique
 
 #### Symétrique
-- Nouveau joueur
-- Depart joueur
-- Debut de partie
+- ~~Nouveau joueur~~
+- ~~Depart joueur~~
+- ~~Debut de partie~~
 - Entré d'un code
 - Appui sur le buzz
 - Fin de partie
