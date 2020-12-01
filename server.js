@@ -13,22 +13,28 @@ function updateTasksData() {
     return JSON.parse(fs.readFileSync(TASKS_FILE));
 }
 
+const playersRoom = new Map();
+const rooms = new Map();
+
+let tasksData = updateTasksData();
+
+// bind game data to app
+app.rooms = rooms;
+app.playersRoom = playersRoom;
+app.tasksData = tasksData;
+
 // EXPRESS STUFF
 
 app.set("view engine", "pug")
 app.set("views", __dirname + "/src/views/");
 
 app.use("/", express.static( __dirname +  "/src/public/"));
-app.use("/", require("./src/routes/mainRoute"));
-app.use("/api", require("./src/routes/api"));
+
+require("./src/routes/mainRoute").apply("", app);
+require("./src/routes/api").apply("/api", app);
 
 // SOCKET STUFF
 // game server logic here
-
-const playersRoom = new Map();
-const rooms = new Map();
-
-let tasksData = updateTasksData();
 
 io.on("connection", (socket) => {
     /**
@@ -56,12 +62,14 @@ io.on("connection", (socket) => {
 
                 return;
             }
-        } else { // create room if doesn't exist
-            room = game.game(roomID, tasksData);
-            rooms.set(roomID, room);
-            playersRoom.set(socket.id, roomID);
-            
-            room.join(socket.id, name);
+        } else {
+            // ! SHOULD NOT CONNECT TO NON-EXISTING ROOM (see /api/createRoom)
+
+            socket.emit("error", {
+                message: "Connecting to inexistant room."
+            });
+
+            return;
         }
 
         socket.join(roomID);
