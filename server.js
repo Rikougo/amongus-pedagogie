@@ -12,6 +12,8 @@ const io = require("socket.io")(http);
 const types = require("./src/lib/types");
 const { Socket } = require("socket.io");
 
+const PORT = 1030;
+
 app.logger = require("simple-node-logger").createSimpleLogger();
 app.logger.setLevel('all');
 
@@ -182,6 +184,6 @@ const socketHandler = (socket) => {
 
 io.on("connection", socketHandler);
 
-http.listen(3000, () => {
-    app.logger.info("listening on *:3000");
+http.listen(PORT, () => {
+    app.logger.info(`Listening to *:${PORT}`);
 });
