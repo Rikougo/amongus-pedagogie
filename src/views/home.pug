@@ -1,9 +1,13 @@
 extends template
 
 append content
-    form(action="/api/createRoom", method="get")
-        input#name(type="text", name="name", placeholder="Votre nom", required)
-        button#createRoom Créer
+    .container
+        .navigationForm
+            input#name(type="text", name="name", placeholder="Votre nom", required)
+            button#createRoom Créer
+            .joinRoom
+                input#roomID(type="text", name="roomID", placeholder="Code", required)
+                button#joinRoom >
 
 append bodyScripts
     script(src="/scripts/clientHome.js")

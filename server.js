@@ -1,3 +1,7 @@
+/**
+ * @author Sakeiru
+ */
+
 const fs = require("fs");
 const express = require("express");
 
@@ -5,15 +9,29 @@ const app = express();
 const http = require("http").createServer(app);
 const io = require("socket.io")(http);
 
-const game = require("./src/lib/game");
+const types = require("./src/lib/types");
+const { Socket } = require("socket.io");
 
+app.logger = require("simple-node-logger").createSimpleLogger();
+app.logger.setLevel('all');
+
+/**
+ * @return {types.TasksData}
+ */
 function updateTasksData() {
     const TASKS_FILE = "./src/cache/tasks.json";
 
     return JSON.parse(fs.readFileSync(TASKS_FILE));
 }
 
+/**
+ * @type {Map<string, string} <socketID, roomID>
+ */
 const playersRoom = new Map();
+
+/**
+ * @type {Map<string, import('./src/lib/game.js').Game>}
+ */
 const rooms = new Map();
 
 let tasksData = updateTasksData();
@@ -33,18 +51,19 @@ app.use("/", express.static( __dirname +  "/src/public/"));
 require("./src/routes/mainRoute").apply("", app);
 require("./src/routes/api").apply("/api", app);
 
-// SOCKET STUFF
-// game server logic here
-
-io.on("connection", (socket) => {
+/**
+ * @param {Socket} socket
+ */
+const socketHandler = (socket) => {
     /**
      * When client socket emit that it joins a room it will test if the asked room exist, two cases :
      *  - it doesn't exist and then it will create one
      *  - it exists and then it will attempt to join it
      * 
-     * ! Care joining a room can fail, it will then emit an error signal with the error message 
+     * ! Care joining a room can fail, it will then emit an error signal with the error message
+     * @param {{roomID: string, name: string | undefined}} payload
      */
-    socket.on("joinRoom", (payload) => {
+    const joinRoomHandler = (payload) => {
         let roomID = payload.roomID;
         let name = payload.name || "Bob";
 
@@ -63,8 +82,6 @@ io.on("connection", (socket) => {
                 return;
             }
         } else {
-            // ! SHOULD NOT CONNECT TO NON-EXISTING ROOM (see /api/createRoom)
-
             socket.emit("error", {
                 message: "Connecting to inexistant room."
             });
@@ -85,7 +102,8 @@ io.on("connection", (socket) => {
             players: playersList
         });
 
-    });
+    };
+    socket.on("joinRoom", joinRoomHandler);
 
     socket.on("startGame", () => {
         let roomID = playersRoom.get(socket.id);
@@ -100,14 +118,23 @@ io.on("connection", (socket) => {
             room.startGame();
 
             // signal to each player individually with role
-            room.players.forEach((v, k) => {
-                console.log(v);
+            room.players.forEach((player, socketID) => {
+                /**
+                 * @type {Object.<string, {content?: string | undefined}>}
+                 */
+                let tasks = {};
 
-                io.of("/").sockets.get(k).emit("gameStart", {
+                for (let k in player.tasks) {
+                    let v = player.tasks[k];
+
+                    tasks[k] = {content: v.content}
+                }
+
+                io.of("/").sockets.get(socketID).emit("gameStart", {
                     gamestate: room.state,
-                    role: v.role,
-                    tasks: v.tasks
-                })
+                    role: player.role,
+                    tasks: tasks
+                });
             });
         } catch (err) {
             socket.emit("error", err.message);
@@ -115,23 +142,21 @@ io.on("connection", (socket) => {
         }
     });
 
-    socket.on("crewmateTask", (payload) => {
+    /**
+     * 
+     * @param {{taskID: string, code: string}} payload 
+     */
+    const taskHandler = (payload) => {
         let roomID = playersRoom.get(socket.id);
         let room = rooms.get(roomID);
+        let player = room.players.get(socket.id);
 
-        if (room.players.get(socket.id).role !== "crewmate") {
-            socket.emit("error", "You're not a crewmate, sir. Tryin' to cheat ?");
+        if (!(payload.taskID in player.tasks)) {
+            socket.emit("error", "Sending code to a non-existant task... strange ?");
+            return;
         }
-    });
-
-    socket.on("impostorTask", (payload) => {
-        let roomID = playersRoom.get(socket.id);
-        let room = rooms.get(roomID);
-
-        if (room.players.get(socket.id).role !== "impostor") {
-            socket.emit("error", "You're not an impostor, sir. Tryin' to cheat ?");
-        }
-    });
+    };
+    socket.on("task", taskHandler);
 
     socket.on("disconnect", () => {
         let roomID = playersRoom.get(socket.id);
@@ -142,7 +167,7 @@ io.on("connection", (socket) => {
 
             room.leave(socket.id);
 
-            if (room.isEmpty()) {
+            if (room.empty) {
                 room.reset();
             } else {
                 socket.to(roomID).emit("updatePlayers", {
@@ -150,11 +175,13 @@ io.on("connection", (socket) => {
                 });
             }
         } else { // strange behavior here should not be able for a player to not have a room attached to
-            console.warn("Trying to remove from a non-existing room.");
+            app.logger.warn("Trying to remove from a non-existing room.");
         }
     });
-});
+};
+
+io.on("connection", socketHandler);
 
 http.listen(3000, () => {
-    console.log("listening on *:3000");
+    app.logger.info("listening on *:3000");
 });

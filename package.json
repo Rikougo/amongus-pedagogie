@@ -8,7 +8,9 @@
     "test": "nodemon server.js"
   },
   "nodemonConfig": {
-    "ignore": ["src/public/*"]
+    "ignore": [
+      "src/public/*"
+    ]
   },
   "repository": {
     "type": "git",
@@ -31,6 +33,7 @@
     "express": "^4.17.1",
     "nodemon": "^2.0.6",
     "pug": "^3.0.0",
+    "simple-node-logger": "^18.12.24",
     "socket.io": "^3.0.1"
   }
 }

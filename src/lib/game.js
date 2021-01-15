@@ -1,3 +1,5 @@
+const type = require("./types");
+
 // STATE OF THE GAME
 const WAITING = "WAITING";
 const PLAYING = "PLAYING";
@@ -8,18 +10,32 @@ const ENDED   = "ENDING";
 const LIMIT = 6;
 const MINIMUM = 4;
 
+/**
+ * @typedef {Game} Game
+ */
 class Game {
     
     /**
-     * 
      * @param {string} roomID 
-     * @param {Map} tasksData 
+     * @param {type.TasksData} tasksData 
      */
     constructor(roomID, tasksData) {
+        /**
+         * @type {string}
+         */
         this.id = roomID;
+
+        /**
+         * @type {type.TasksData}
+         */
         this.tasksData = tasksData;
 
+        /**
+         * @type {Map<string, Player>}
+         */
         this.players = new Map();
+
+
         this.state = WAITING;
     }
 
@@ -60,6 +76,9 @@ class Game {
         this.log(`Player ${name} [${playerSocketId}] left the room`);
     }
 
+    /**
+     * @return {{id: string, name: string, admin: boolean}[]}
+     */
     playersList() {
         let list = [];
 
@@ -82,10 +101,7 @@ class Game {
         // 1 impostors per 4 players
         let impostors = Math.floor(this.players.size / 4);
         let crewmates = this.players.size - impostors;
-
-        console.log(crewmates, impostors);
-
-        let repartition = generateRandomRoleSet(crewmates, impostors);
+        
         let playersArray = Array.from(this.players.values());
 
         let impostorsTasks = {};
@@ -93,12 +109,8 @@ class Game {
         // distribute crewmate roles
         while (crewmates > 0) {
             let rndIndex = Math.floor(Math.random() * playersArray.length);
-            console.log(rndIndex);
             let player = playersArray[rndIndex];
             playersArray.splice(rndIndex, 1);
-
-            console.log(playersArray);
-            // console.log(this.tasksData["test"]["crewmates"]);
 
             player.assignRole("crewmate", this.tasksData["test"]["crewmates"]);
 
@@ -116,8 +128,9 @@ class Game {
 
     /**
      * @return {boolean} Says if game has no player inside
+     * @readonly
      */
-    isEmpty() {
+    get empty() {
         return this.players.size === 0;
     }
 
@@ -129,21 +142,46 @@ class Game {
         console.log(`[${this.id} ROOM] ${message}`);
     }
 
+    /**
+     * !TODO
+     */
     reset() {
+        this.players = new Map();
 
+        this.state = WAITING;
     }
 }
 
+/**
+ * @typedef {Player} Player
+ */
 class Player {
     constructor(id, name) {
+        /**
+         * @type {string}
+         */
         this.id = id;
+
+        /**
+         * @type {string}
+         */
         this.name = name;
+
+        /**
+         * @type {string[]}
+         */
         this.playedCodes = [];
+
+        /**
+         * @type {type.Task[]}
+         */
+        this.tasks;
     }
 
     /**
      * give a role for the player
      * @param {number} role 0 for crewmate, 1 for impostor
+     * @param {} tasks
      */
     assignRole(role, tasks) {
         this.role = role;
@@ -152,40 +190,11 @@ class Player {
     }
 }
 
-/**
- * ! TOCHANGE
- * @param {number} crewmates 
- * @param {number} impostors 
- * 
- * @return {Array} shuffled array of roles 
- */
-function generateRandomRoleSet(crewmates, impostors) {
-    let result = [];
-
-    while(crewmates > 0 || impostors > 0) {
-        if (crewmates > 0 && impostors > 0) {
-            if (Math.floor(Math.random() * 100) > 70) {
-                result.push("impostor");
-                impostors--;
-            } else {
-                result.push("crewmate");
-                crewmates--;
-            }
-        } else if (crewmates > 0) {
-            result.push("crewmate");
-            crewmates--;
-        } else {
-            result.push("impostor");
-            impostors--;
-        }
-    }
-
-    return result;
-}
-
 module.exports = {
-    player: (name) => new Player(name),
-    game: (id, tasksData) => new Game(id, tasksData),
+    // player: (name) => new Player(name),
+    // game: (id, tasksData) => new Game(id, tasksData),
+    Game: Game,
+    Player: Player,
     WAITING: WAITING,
     PLAYING: PLAYING,
     MEETING: MEETING,

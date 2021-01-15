@@ -31,3 +31,8 @@ Les évenements (abstraits) peuvent avoir différentes formes :
 #### Client -> Serveur
 - Joueur tué
 - Tâche complété
+
+#### 16/12/2020
+- Sabotage
+- Variables configurable début de lobby
+- Easter egg cheat

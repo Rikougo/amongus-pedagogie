@@ -1,12 +1,17 @@
+const game = require("../../lib/game");
+
+/**
+ * @type {string | undefined} the role of the player, should be undefined until games start
+ */
+let role;
+
 $(document).ready(() => {
     const socket = io();
 
     /**
-     * Player is here a list of object with :
-     *   - {string} name
-     *   - {boolean} admin
-     * 
      * It updates left players list and set start button disabled or enabled
+     * 
+     * @param {{name: string, admin: boolean}[]} players
      */
     function updatePlayersList(players) {
         $("#players").empty();
@@ -21,7 +26,7 @@ $(document).ready(() => {
             // if player is the client
             if (value.id === socket.id) {
                 name.addClass("self");
-                $("#startGame").attr("disabled", !value.admin); // configure start button
+                $("#startGame").attr("disabled", !value.admin || players.length < 4); // configure start button
             }
 
             $(playerDiv).appendTo('#players');
@@ -38,10 +43,42 @@ $(document).ready(() => {
 
     /**
      * 
-     * @param {array} tasks array of task that has the code of the taks and other infos
+     * @param {Object.<string, {content?: string | undefined}>} tasks array of task that has the code of the taks and other infos
      */
     function updatePlayerTasks(tasks) {
-        
+        let tasksElem = $("#tasks");
+
+        for(let key in tasks) {
+            if (!key) continue;
+            let value = tasks[key];
+
+            let item = $(`<li class='.task-${key}'><h2>${key}</h2></li>`);
+
+            if (value?.content) {
+                let content = $(`<p>${value.content}</p>`);
+                $(content).appendTo($(item))
+            }
+
+            let form = $(`<form><input type='text' name='task' required></input><input type='submit'></input></form`);
+
+            $(form).submit((e) => {
+                e.preventDefault();
+
+                let form = $(e.target);
+                let value = $(form).find("input[type='text']").val();
+                
+                console.log(`Send ${value} to ${key}`);
+
+                socket.emit("sendCode", {
+                    taskID: key,
+                    value: value
+                });
+            });
+
+            $(form).appendTo($(item));
+
+            $(item).appendTo($(tasksElem))
+        }
     }
 
     socket.on("connect", () => {
@@ -58,10 +95,17 @@ $(document).ready(() => {
         updatePlayersList(payload.players);
     });
 
-    socket.on("gameStart", (payload) => {
+    /**
+     * @param {{gamestate: string, tasks: Object.<string, {content?: string | undefined}>, role: string}} payload 
+     */
+    let gamestartHandler = (payload) => {
+        updatePlayerTasks(payload.tasks)
+
+        $("#game").toggle();
+        $("#lobby").toggle();
         changeState(payload.gamestate);
-        console.log(payload.tasks);
-    });
+    };
+    socket.on("gameStart", gamestartHandler);
 
     $("#startGame").click(() => {
         socket.emit("startGame");

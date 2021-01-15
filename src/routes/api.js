@@ -1,7 +1,13 @@
 const url = require("url");
 
 const game = require("../lib/game");
+const type = require("../lib/types");
 
+/**
+ * 
+ * @param {number} length 
+ * @return {string}
+ */
 function _makeid(length) {
     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     
@@ -13,14 +19,22 @@ function _makeid(length) {
     return result;
 }
 
+/**
+ * 
+ * @param {*} rooms 
+ * @param {type.TasksData} tasksData 
+ */
 function _generateRandomRoom(rooms, tasksData) {
+    /**
+     * @type {string}
+     */
     let id;
     
     do {
         id = _makeid(5);
     } while(rooms.has(id));
 
-    rooms.set(id, game.game(
+    rooms.set(id, new game.Game(
         id,
         tasksData
     ));
@@ -30,18 +44,13 @@ function _generateRandomRoom(rooms, tasksData) {
 
 module.exports = {
     apply: function(path, app) {
-        console.log(path+"/createRoom");
-
-        /**
-         * ! TOCHANGE
-         * Still WIP the pathname given must be determined 
-         * by current active rooms and create a new one
-         */
         app.get(path+"/createRoom", (req, res) => {
-            let id = _generateRandomRoom(app.rooms, app.tasksData)
+            let id = _generateRandomRoom(app.rooms, app.tasksData);
+
+            app.logger.debug("Creating ", id, " room");
 
             res.redirect(url.format({   
-                pathname: `/${id}`,
+                pathname: `/rooms/${id}`,
                 query: {
                     name: req.query.name
                 }

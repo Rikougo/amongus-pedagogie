@@ -2,16 +2,34 @@
     margin: 0;
 }
 
-.side-pannel {
-    min-width: 10vw;
-}
-
 .container {
     min-width: 100%;
     min-height: 100%;
 
     display: flex;
     flex-direction: row;
+
+    justify-content: center;
+}
+
+.navigationForm {
+    justify-self: center;
+    align-self: center;
+
+    display: flex;
+    flex-direction: column;
+}
+
+.navigationForm:first-child {
+    margin: 10px;
+}
+
+.navigationForm input[type="text"] {
+    text-align: center;
+}
+
+.side-pannel {
+    min-width: 10vw;
 }
 
 .left-board {
@@ -51,6 +69,10 @@
     flex-grow: 1;
 
     text-align: center;
+}
+
+#roomID {
+    font-family: monospace;
 }
 
 #state {
