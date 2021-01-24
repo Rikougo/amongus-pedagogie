@@ -4,8 +4,9 @@
  */
 
 /**
- * @typedef {Object.<string, {crewmates : Object.<string, string>, impostor : Object.<string, string>}>} TasksData
- * @typedef {Object.<string, {content?: string | undefined, code: string}>} Task
+ * @typedef {{content?: string | undefined, code: string, completed: boolean}} Task
+ * @typedef {Object.<string, Task>} TasksList
+ * @typedef {Object.<string, {crewmates : TasksList, impostor : TasksList}>} TasksData
  */
 
 exports.unused = {};

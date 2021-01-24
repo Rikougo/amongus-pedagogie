@@ -1,5 +1,3 @@
-const game = require("../../lib/game");
-
 /**
  * @type {string | undefined} the role of the player, should be undefined until games start
  */
@@ -46,20 +44,20 @@ $(document).ready(() => {
      * @param {Object.<string, {content?: string | undefined}>} tasks array of task that has the code of the taks and other infos
      */
     function updatePlayerTasks(tasks) {
-        let tasksElem = $("#tasks");
+        const tasksElem = $("#tasks");
 
         for(let key in tasks) {
             if (!key) continue;
-            let value = tasks[key];
+            const value = tasks[key];
 
-            let item = $(`<li class='.task-${key}'><h2>${key}</h2></li>`);
+            const item = $(`<li class='.task-${key}'><h2>${key}</h2></li>`);
 
             if (value?.content) {
                 let content = $(`<p>${value.content}</p>`);
                 $(content).appendTo($(item))
             }
 
-            let form = $(`<form><input type='text' name='task' required></input><input type='submit'></input></form`);
+            const form = $(`<form><input type='text' name='task' required ${value.completed ? "disabled" : ""}></input><input type='submit'></input></form`);
 
             $(form).submit((e) => {
                 e.preventDefault();
@@ -69,7 +67,7 @@ $(document).ready(() => {
                 
                 console.log(`Send ${value} to ${key}`);
 
-                socket.emit("sendCode", {
+                socket.emit("taskCode", {
                     taskID: key,
                     value: value
                 });
@@ -108,7 +106,7 @@ $(document).ready(() => {
     socket.on("gameStart", gamestartHandler);
 
     $("#startGame").click(() => {
-        socket.emit("startGame");
+        socket.emit("startGame", {tasksType: "test"});
     });
 
     socket.on("error", (err) => {

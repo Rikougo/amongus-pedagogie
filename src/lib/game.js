@@ -1,25 +1,31 @@
-const type = require("./types");
-
-// STATE OF THE GAME
-const WAITING = "WAITING";
-const PLAYING = "PLAYING";
-const MEETING = "MEETING";
-const ENDED   = "ENDING";
-
-// MAX PLAYER LIMIT (to change)
-const LIMIT = 6;
-const MINIMUM = 4;
+const Application = require("./application");
+const { TasksData, Task, TasksList } = require("./types");
 
 /**
  * @typedef {Game} Game
  */
 class Game {
+    static States = {
+        WAITING: "WAITING",
+        PLAYING: "PLAYING",
+        MEETING: "MEETING",
+        ENDING:  "ENDING"
+    };
+
+    static LIMIT = 6;
+    static MINIMUM = 4;
     
     /**
+     * @param {Application} app
      * @param {string} roomID 
-     * @param {type.TasksData} tasksData 
+     * @param {TasksData} tasksData 
      */
-    constructor(roomID, tasksData) {
+    constructor(app, roomID, tasksData) {
+        /**
+         * @type {Application}
+         */
+        this.app = app;
+
         /**
          * @type {string}
          */
@@ -35,8 +41,9 @@ class Game {
          */
         this.players = new Map();
 
+        this.state = Game.States.WAITING;
 
-        this.state = WAITING;
+        this.log("Created room.");
     }
 
     /**
@@ -45,11 +52,11 @@ class Game {
      * @param {string} name 
      */
     join(playerSocketId, name) {
-        if (this.state !== WAITING)
-            throw Error(`Joining non-waiting room ${this.id}`);
+        if (this.state !== Game.States.WAITING)
+            throw new Error(`Joining non-waiting room ${this.id}`);
 
-        if (this.players.length === LIMIT) 
-            throw Error(`Full room error at room ${this.id}`);
+        if (this.players.length === Game.LIMIT) 
+            throw new Error(`Full room error at room ${this.id}`);
         
         this.players.set(playerSocketId, new Player(playerSocketId, name));
 
@@ -68,9 +75,13 @@ class Game {
         this.players.delete(playerSocketId);
 
         // deleguate admin role
-        if (!this.players.has(this.admin) && this.players.size >= 1) {
+        if (this.admin === playerSocketId && this.players.size >= 1) {
             this.log("Changed admin");
             this.admin = this.players.keys().next().value;
+        }
+
+        if (this.state !== Game.States.WAITING && this.state !== Game.States.ENDING) {
+            this.checkWinState();
         }
 
         this.log(`Player ${name} [${playerSocketId}] left the room`);
@@ -91,20 +102,30 @@ class Game {
         return list;
     }
 
-    startGame() {
-        if (this.players.size < MINIMUM) {
-            throw Error(`Can't start game with less than ${MINIMUM} players.`);
+    /**
+     * 
+     * @param {string} tasksType 
+     */
+    startGame(tasksType) {
+        if (this.players.size < Game.MINIMUM) {
+            throw new Error(`Can't start game with less than ${Game.MINIMUM} players.`);
         }
 
-        // GIVE ROLES
-        // for now impostors/crewmate repartition is fixed
-        // 1 impostors per 4 players
+        const tasksData = this.tasksData[tasksType];
+
+        if (!tasksData) throw new Error(`Unknown task category ${tasksType}.`);
+
+        /**
+         * GIVE ROLES 
+         * for now impostors/crewmate repartition is fixed
+         * 1 impostors per 4 players
+        */ 
         let impostors = Math.floor(this.players.size / 4);
         let crewmates = this.players.size - impostors;
         
-        let playersArray = Array.from(this.players.values());
+        const playersArray = Array.from(this.players.values());
 
-        let impostorsTasks = {};
+        const impostorsTasks = {};
 
         // distribute crewmate roles
         while (crewmates > 0) {
@@ -112,18 +133,49 @@ class Game {
             let player = playersArray[rndIndex];
             playersArray.splice(rndIndex, 1);
 
-            player.assignRole("crewmate", this.tasksData["test"]["crewmates"]);
+            let pTasks = {};
+            Object.entries(tasksData.crewmates).forEach(([key, value]) => pTasks[key] = {...value, completed: false});
 
-            impostorsTasks[player.id] = this.tasksData["test"]["impostors"][crewmates];
+            player.assignRole(Player.Role.CREWMATE, pTasks);
 
+            impostorsTasks[player.id] = {...tasksData.impostors[crewmates], completed: false};
             crewmates--;
         }
 
         // give impostor roles to other players with impostors tasks
-        playersArray.forEach(v => v.assignRole("impostor", impostorsTasks));
+        playersArray.forEach(v => v.assignRole(Player.Role.IMPOSTOR, impostorsTasks));
 
         // CHANGE STATE
-        this.state = PLAYING;
+        this.state = Game.States.PLAYING;
+    }
+
+    /**
+     * 
+     * @param {string} playerSocketId 
+     */
+    kill(playerSocketId) {
+        if (!this.players.has(playerSocketId)) {
+            throw new Error("Unknown player.");
+        }
+        
+        this.players.get(playerSocketId).alive = false;
+
+        this.checkWinState();
+    }
+
+    /**
+     * 
+     */
+    checkWinState() {
+        let crewmatesAlive, impostorsAlive = (0, 0);
+
+        this.players.forEach((player) => player.role === Player.Role.CREWMATE ? crewmatesAlive++ : impostorsAlive++);
+
+        if (impostorsAlive >= crewmatesAlive) {
+            this.log("Impostors win.");
+        } else if (crewmatesAlive === 0) {
+            this.log("Crewmate win");
+        }
     }
 
     /**
@@ -139,16 +191,16 @@ class Game {
      * @param {string} message 
      */
     log(message) {
-        console.log(`[${this.id} ROOM] ${message}`);
+        this.app.logger.info(`[${this.id} ROOM] ${message}`);
     }
 
     /**
-     * !TODO
+     * 
      */
     reset() {
         this.players = new Map();
 
-        this.state = WAITING;
+        this.state = Game.WAITING;
     }
 }
 
@@ -156,6 +208,11 @@ class Game {
  * @typedef {Player} Player
  */
 class Player {
+    static Role = {
+        CREWMATE: "crewmate",
+        IMPOSTOR: "impostor"
+    }
+
     constructor(id, name) {
         /**
          * @type {string}
@@ -173,15 +230,20 @@ class Player {
         this.playedCodes = [];
 
         /**
-         * @type {type.Task[]}
+         * @type {TasksList}
          */
         this.tasks;
+
+        /**
+         * @type {boolean}
+         */
+        this.alive = true;
     }
 
     /**
      * give a role for the player
      * @param {number} role 0 for crewmate, 1 for impostor
-     * @param {} tasks
+     * @param {TasksList} tasks
      */
     assignRole(role, tasks) {
         this.role = role;
@@ -191,13 +253,6 @@ class Player {
 }
 
 module.exports = {
-    // player: (name) => new Player(name),
-    // game: (id, tasksData) => new Game(id, tasksData),
     Game: Game,
-    Player: Player,
-    WAITING: WAITING,
-    PLAYING: PLAYING,
-    MEETING: MEETING,
-    ENDED: ENDED,
-    LIMIT: LIMIT
-}
+    Player: Player
+};

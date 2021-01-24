@@ -1,6 +1,7 @@
 const url = require("url");
 
-const game = require("../lib/game");
+const Application = require("../lib/application");
+const { Game } = require("../lib/game");
 const type = require("../lib/types");
 
 /**
@@ -20,11 +21,11 @@ function _makeid(length) {
 }
 
 /**
- * 
+ * @param {Application} app
  * @param {*} rooms 
  * @param {type.TasksData} tasksData 
  */
-function _generateRandomRoom(rooms, tasksData) {
+function _generateRandomRoom(app, rooms, tasksData) {
     /**
      * @type {string}
      */
@@ -32,22 +33,29 @@ function _generateRandomRoom(rooms, tasksData) {
     
     do {
         id = _makeid(5);
-    } while(rooms.has(id));
+    } while(rooms[id]);
 
-    rooms.set(id, new game.Game(
+    rooms[id] = new Game(
+        app,
         id,
         tasksData
-    ));
+    );
 
     return id;
 }
 
 module.exports = {
-    apply: function(path, app) {
-        app.get(path+"/createRoom", (req, res) => {
-            let id = _generateRandomRoom(app.rooms, app.tasksData);
+    /**
+     * 
+     * @param {string} path 
+     * @param {Application} app 
+     * @param {*} express 
+     */
+    apply: function(path, app, express) {
+        express.get(path+"/createRoom", (req, res) => {
+            app.logger.debug("Creating room.");
 
-            app.logger.debug("Creating ", id, " room");
+            let id = _generateRandomRoom(app, app.rooms, Application.loadTasks());
 
             res.redirect(url.format({   
                 pathname: `/rooms/${id}`,
