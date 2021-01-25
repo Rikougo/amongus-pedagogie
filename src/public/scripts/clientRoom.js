@@ -50,14 +50,14 @@ $(document).ready(() => {
             if (!key) continue;
             const value = tasks[key];
 
-            const item = $(`<li class='.task-${key}'><h2>${key}</h2></li>`);
+            const item = $(`<li class='task-${key}'><h2 class='taskTitle'>${key}</h2></li>`);
 
             if (value?.content) {
                 let content = $(`<p>${value.content}</p>`);
                 $(content).appendTo($(item))
             }
 
-            const form = $(`<form><input type='text' name='task' required ${value.completed ? "disabled" : ""}></input><input type='submit'></input></form`);
+            const form = $(`<form><input class='taskInput' type='text' name='task' required ${value.completed ? "disabled" : ""}></input><input class='taskButton' type='submit'></input></form`);
 
             $(form).submit((e) => {
                 e.preventDefault();
@@ -69,7 +69,7 @@ $(document).ready(() => {
 
                 socket.emit("taskCode", {
                     taskID: key,
-                    value: value
+                    code: value
                 });
             });
 
@@ -107,6 +107,37 @@ $(document).ready(() => {
 
     $("#startGame").click(() => {
         socket.emit("startGame", {tasksType: "test"});
+    });
+
+    socket.on("feedTask", (payload) => {
+        let codeMessage = $(`<p class='codeMessage'>[${Date.now().toString()}]${payload.playerName || "Unknown"} has entered a code.</p>`);
+
+        codeMessage.appendTo($("#codesFeed"));
+    });
+    
+    socket.on("successTask", (payload) => {
+        let taskElem = $(`.task-${payload.taskID}`);
+
+        console.log("yes !");
+
+        taskElem.find(".taskTitle").css("color", "green");
+        taskElem.find(".taskInput").prop("disabled", true);
+        taskElem.find(".taskInput").css("background", "white");
+        taskElem.find(".taskButton").prop("disabled", true);
+    });
+
+    socket.on("failedTask", (payload) => {
+        let taskElem = $(`.task-${payload.taskID}`);
+
+        console.log("no ! :(");
+
+        taskElem.find(".taskInput").css("background", "red");
+    });
+
+    socket.on("killed", (payload) => {
+        console.log(`Killed by ${payload.killed}`);
+
+        $(".main-board").css("background", "red");
     });
 
     socket.on("error", (err) => {

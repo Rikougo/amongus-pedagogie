@@ -79,6 +79,10 @@
     color: rgb(201, 201, 201);
 }
 
+#tasks {
+    list-style: none;
+}
+
 .right-board {
     border-left: 1px solid black;
 }

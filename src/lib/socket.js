@@ -20,8 +20,9 @@ class SocketHandler {
         ERROR: "error",
         SUCCESS_JOIN: "successJoin",
         FEED_TASK: "feedTask",
-        SUCCES_TASK: "succesTask",
+        SUCCESS_TASK: "successTask",
         FAILED_TASK: "failedTask",
+        KILLED: "killed",
         GAME_START: "gameStart"
     }
 
@@ -146,29 +147,44 @@ class SocketHandler {
             return;
         }
 
-        socket.to(roomID).emit(SocketHandler.ClientEvents.FEED_TASK, {playerName: player.name});
+        this.app.logger.debug(`${task.code}, ${code}`);
+
+        this.app.io.to(roomID).emit(SocketHandler.ClientEvents.FEED_TASK, {playerName: player.name});
 
         if (player.role === Player.Role.CREWMATE) {
             if (code === task.code) {
-                socket.emit(SocketHandler.ClientEvents.SUCCES_TASK, {});
+                task.completed = true;
+
+                socket.emit(SocketHandler.ClientEvents.SUCCESS_TASK, {taskID: taskID});
             } else {
-                socket.emit(SocketHandler.ClientEvents.FAILED_TASK, {});
+                socket.emit(SocketHandler.ClientEvents.FAILED_TASK, {taskID: taskID});
             }
         } else {
             if (code === task.code) {
-                socket.emit(SocketHandler.ClientEvents.SUCCES_TASK, {});
+                const target = room.players.get(taskID);
+                
+                if (!target) {
+                    this.app.logger.error(`Player not found in impostor task id. ${taskID}`);
+                    return;
+                }
+
+                target.alive = false;
+
+                this.app.io.of("/").sockets.get(target.id).emit(SocketHandler.ClientEvents.KILLED, {killer: player.name});
+
+                socket.emit(SocketHandler.ClientEvents.SUCCESS_TASK, {taskID: taskID});
             } else {
-                socket.emit(SocketHandler.ClientEvents.FAILED_TASK, {});
+                socket.emit(SocketHandler.ClientEvents.FAILED_TASK, {taskID: taskID});
             }
         }
     }
 
     /**
      * 
-     * @param {*} socket 
-     * @param {*} payload 
+     * @param {Socket} socket 
+     * @param {undefined} payload 
      */
-    meetingButton() {
+    meetingButton(socket, payload = undefined) {
 
     }
 
