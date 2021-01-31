@@ -14,15 +14,11 @@ import { Subscription } from 'rxjs';
 export class RoomComponent implements OnInit, OnDestroy {
 
     self: Player | undefined;
-    playersList : Player[] = [
-        // new Player({id: "example-id-0", name: "Bob", admin: true, alive: true}),
-        // new Player({id: "example-id-1", name: "Tet", admin: false, alive: true}),
-        // new Player({id: "example-id-2", name: "Foo", admin: false, alive: true}),
-        // new Player({id: "example-id-3", name: "Bar", admin: false, alive: true})
-    ];
+    playersList : Player[] = [];
 
     gameState: string = "CONNECTING";
-    tasks: {[name: string] : { content : string | undefined, completed: boolean}} = {};
+    tasks: {[name: string] : { content : string | undefined, completed: boolean, failed: boolean}} = {};
+    tasksInput: Map<string, string> = new Map();
     codesFeed: {player: string, at: Date}[] = [];
 
     roomId: string;
@@ -54,6 +50,8 @@ export class RoomComponent implements OnInit, OnDestroy {
                 }
 
                 Object.assign(this.self, player);
+
+                console.log(this.self);
             })
         );
 
@@ -77,6 +75,15 @@ export class RoomComponent implements OnInit, OnDestroy {
         );
 
         this.subscriptions.push(
+            this.roomService.updateTasks().subscribe((update) => {
+                if (update.success)
+                    this.tasks[update.taskId].completed = true;
+                else
+                    this.tasks[update.taskId].failed = true;
+            })
+        );
+
+        this.subscriptions.push(
             this.roomService.getError().subscribe((errorMsg: string) => {
                 this.infoFeed.push({at: new Date(), msg: errorMsg, level: "error"});
             })
@@ -90,7 +97,11 @@ export class RoomComponent implements OnInit, OnDestroy {
     }
 
     sendCode(taskId: string) : void {
-        console.log(taskId);
+        if (this.tasksInput.get(taskId)) {
+            this.roomService.sendTaskCode(taskId, this.tasksInput.get(taskId)!)
+    
+            this.tasksInput.set(taskId, "");
+        }
     }
 
     ngOnDestroy() : void {

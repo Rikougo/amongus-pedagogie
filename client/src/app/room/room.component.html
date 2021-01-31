@@ -26,8 +26,8 @@
                 <li class="task-{{ task.key }}" *ngFor="let task of tasks | keyvalue">
                     <p class="taskTitle">{{ task.key }}</p>
                     <div class="taskForm">
-                        <input class="taskInput" type="text" name="text" [disabled]="task.value.completed" placeholder="Code..." ngModel="task-{{ task.key }}">
-                        <input class="taskButton" type="button" (click)="sendCode(task.key)" [disabled]="task.value.completed">
+                        <input class="taskInput" type="text" name="text" [disabled]="task.value.completed" placeholder="Code..." [ngClass]="{'failed': task.value.failed}" [ngModel]="tasksInput.get(task.key)" (ngModelChange)="tasksInput.set(task.key, $event)">
+                        <input class="taskButton" type="button" (click)="sendCode(task.key)" [disabled]="task.value.completed" value=">">
                     </div>
                 </li>
             </ul>

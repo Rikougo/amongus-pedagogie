@@ -3,13 +3,14 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 
 import { Observable, throwError } from 'rxjs';
 import { catchError, retry } from 'rxjs/operators';
+import { environment } from 'src/environments/environment';
 
 @Injectable({
     providedIn: 'root'
 })
 export class ApiTalkerService {
 
-    newRoomUrl = "http://localhost:3000/api/createRoom";
+    newRoomUrl = `${environment.API_ENDPOINT}/api/createRoom`;
 
     constructor(private http: HttpClient) { }
 

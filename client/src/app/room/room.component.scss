@@ -87,6 +87,10 @@
                 font-weight: bold;
                 text-transform: uppercase;
 
+                .failed {
+                    background: #ff6e6e;
+                }
+
                 .taskForm {
                     display: flex;
                     flex-direction: row;

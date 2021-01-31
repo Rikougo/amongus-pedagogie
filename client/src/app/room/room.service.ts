@@ -12,7 +12,7 @@ export class RoomService {
     socket: Socket;
 
     constructor() {
-        this.socket = io(environment.SOCKET_ENDPOINT, {});
+        this.socket = io(environment.API_ENDPOINT, {});
     }
 
     joinRoom(roomdId: string, name: string) {
@@ -33,16 +33,36 @@ export class RoomService {
 
     getSelf() : Observable<any> {
         return new Observable((observer) => {
-            this.socket.on("successJoin", (payload: {player: {name: string, id: string}}) => {
-                observer.next(payload.player);
+            this.socket.on("successJoin", (payload: {player: {name: string, id: string, admin: boolean}}) => {
+                observer.next({...payload.player, alive: true});
+            });
+
+            this.socket.on("killed", (payload: {killer: string}) => {
+                observer.next({alive: false});
             });
         });
     }
 
-    getTasks() : Observable<{[name: string] : { content : string | undefined, completed: boolean}}> {
+    getTasks() : Observable<{[name: string] : { content : string | undefined, completed: boolean, failed: false}}> {
         return new Observable((observer) => {
             this.socket.on("gameStart", (payload: { tasks : {[name: string] : { content : string | undefined, completed: boolean}}}) => {
-                observer.next(payload.tasks);
+                let res : any = {};
+
+                Object.entries(payload.tasks).forEach(([key, value]) => {res[key] = {...value, failed: false}});
+
+                observer.next(res as {[name: string] : { content : string | undefined, completed: boolean, failed: false}});
+            });
+        });
+    }
+
+    updateTasks() : Observable<{taskId: string, success: boolean}> {
+        return new Observable((observer) => {
+            this.socket.on("successTask", (payload: {taskID: string}) => {
+                observer.next({taskId: payload.taskID, success: true});
+            });
+
+            this.socket.on("failedTask", (payload: {taskID: string}) => {
+                observer.next({taskId: payload.taskID, success: false});
             });
         });
     }
@@ -80,7 +100,7 @@ export class RoomService {
 
     getCodesFeed() : Observable<{player: string, at: Date}> {
         return new Observable((observer) => {
-            this.socket.on("feedTask", (payload: {player: string, at: Date}) => { observer.next(payload) });
+            this.socket.on("feedTask", (payload: {playerName: string, at: Date}) => { observer.next({player: payload.playerName, at: payload.at}) });
         });
     }
 
@@ -94,5 +114,9 @@ export class RoomService {
 
     startGame() {
         this.socket.emit("startGame", {tasksType: "test"});
+    }
+
+    sendTaskCode(taskId: string, code: string) {
+        this.socket.emit("taskCode", {taskID: taskId, code: code});
     }
 }

@@ -152,7 +152,7 @@ class SocketHandler {
             return;
         }
 
-        this.app.io.to(roomID).emit(SocketHandler.ClientEvents.FEED_TASK, {playerName: player.name});
+        this.app.io.to(roomID).emit(SocketHandler.ClientEvents.FEED_TASK, {playerName: player.name, at: new Date()});
 
         if (player.role === Player.Role.CREWMATE) {
             if (code === task.code) {
