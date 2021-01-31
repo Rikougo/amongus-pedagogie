@@ -1,0 +1,25 @@
+.createRoomError {
+    position: fixed;
+
+    top:0;
+    min-width: 100%;
+
+    z-index: 1;
+}
+
+.createRoomError p {
+    text-align: center;
+}
+
+.container {
+    position: absolute;
+    top: 0;
+}
+
+.navigationForm {
+    justify-self: center;
+    align-self: center;
+
+    display: flex;
+    flex-direction: column;
+}

@@ -1,0 +1,97 @@
+.side-pannel {
+    min-width: 10vw;
+}
+
+.left-board {
+    border-right: 1px solid black;
+
+    
+    #players {
+        padding-inline-start: 0;
+        display: flex;
+        flex-direction: column;
+
+        align-items: center;
+
+        .player {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+        }
+        
+        .player.self {
+            font-weight: bold;
+        }
+    }
+}
+
+.right-board {
+    border-left: 1px solid black;
+    padding: 1em;
+
+    #codesFeed {
+        padding-inline-start: 0;
+        list-style: none;
+    
+        display: flex;
+        flex-direction: column;
+    
+        align-items: center;
+    }
+
+    #infoFeed {
+        padding-inline-start: 0;
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+    
+        align-items: flex-start;
+
+        .feed.error {
+            color: #ff6e6e;
+        }
+    }
+}
+   
+.main-board {
+    display: flex;
+    flex-direction: column;
+
+    justify-content: center;
+    align-items: center;
+    flex-grow: 1;
+
+    text-align: center;
+    transition-duration: 0.4s;
+
+    .game.alive {
+        background: #b9ff6e;
+    }
+
+    .game {
+        background: #ff6e6e;
+
+        width: 100%;
+        height: 100%;
+
+        display: flex;
+        flex-direction: column;
+
+        justify-content: center;
+        align-items: center;
+
+        #tasks {
+            list-style: none;
+
+            li[class^='task-'] {
+                font-weight: bold;
+                text-transform: uppercase;
+
+                .taskForm {
+                    display: flex;
+                    flex-direction: row;
+                }
+            }
+        }
+    }
+}

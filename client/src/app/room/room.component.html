@@ -1,0 +1,54 @@
+<div class="container">
+    <div class="left-board side-pannel">
+        <ul id="players">
+            <li *ngFor="let player of playersList" class="player" [ngClass]="{'admin': player.admin, 'self': player.id === self?.id}">
+                <div class="name">{{ player.name }}</div>
+            </li>
+        </ul>
+    </div>
+
+    <div class="main-board">
+        <div class="connecting" *ngIf="gameState === 'CONNECTING'">
+
+        </div>
+
+        <div id="lobby" *ngIf="gameState === 'WAITING' && self">
+            <h1 id="roomId">{{ roomId }}</h1>
+
+            <div class="stateGroup">
+                <p id="state"> {{ gameState }}</p>
+                <button id="startGame" (click)=startGame() [disabled]="!self.admin || playersList.length < 4">Lancer la partie</button>
+            </div>
+        </div>
+
+        <div class="game" *ngIf="gameState === 'PLAYING' && self" [ngClass]="{'alive': self.alive}">
+            <ul id="tasks">
+                <li class="task-{{ task.key }}" *ngFor="let task of tasks | keyvalue">
+                    <p class="taskTitle">{{ task.key }}</p>
+                    <div class="taskForm">
+                        <input class="taskInput" type="text" name="text" [disabled]="task.value.completed" placeholder="Code..." ngModel="task-{{ task.key }}">
+                        <input class="taskButton" type="button" (click)="sendCode(task.key)" [disabled]="task.value.completed">
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="right-board side-pannel">
+        <div *ngIf="gameState === 'PLAYING' || gameState === 'MEETING'; else rightOff">
+            <ul id="codesFeed">
+                <li *ngFor="let payload of codesFeed">
+                    <b>[{{ payload.at | date:'HH:mm' }}]</b> {{ payload.player }} a entré un code.
+                </li>
+            </ul>
+        </div>
+
+        <ng-template #rightOff>
+            <ul id="infoFeed">
+                <li *ngFor="let payload of infoFeed" class="feed" [ngClass]="payload.level">
+                    <b>[{{ payload.at | date:'HH:mm' }}]</b> {{ payload.msg }}
+                </li>
+            </ul>
+        </ng-template>
+    </div>
+</div>

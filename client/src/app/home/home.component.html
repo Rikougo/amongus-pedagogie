@@ -1,0 +1,20 @@
+<div *ngIf="createRoomError" class="createRoomError">
+    <p>Une erreur est survenue pendant la création de la room.</p>
+</div>
+
+<div class="container">
+    <form class="navigationForm" [formGroup]="pannel">
+        
+        <div *ngIf="isNameValid" class="alert alert-danger"> Nom vide ou invalide.</div>
+        <input type="text" id="name" name="name" formControlName="name" placeholder="Votre nom" required>
+
+        <button type="button" id="createRoom" (click)="createRoom()">Créer</button>
+
+        <div class="joinRoom">
+            <div *ngIf="isCodeValid" class="alert alert-danger">Code vide ou invalide.</div>
+            
+            <input type="text" id="roomId" name="roomId" formControlName="roomId" placeholder="Code" required>
+            <button type="button" id="JoinRoom" (click)="joinRoom()">></button>
+        </div>
+    </form>
+</div>
