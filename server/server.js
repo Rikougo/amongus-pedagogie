@@ -9,6 +9,8 @@ const { static } = require("express")
 const express = require("express")();
 const http = require("http").createServer(express);
 
+const PORT = process.env.PORT || 3000;
+
 express.set("view engine", "pug");
 express.set("views", __dirname + "/src/views/");
 
@@ -17,8 +19,8 @@ express.use("/", static( __dirname +  "/src/public/"));
 // require("./src/routes/mainRoute").apply("", app, express);
 require("./src/routes/api").apply("/api", app, express);
 
-http.listen(3000, () => {
-    app.logger.info("listening on *:3000");
+http.listen(PORT, () => {
+    app.logger.info(`listening on *:${PORT}`);
 });
 
 const io = require("socket.io")(http, {
