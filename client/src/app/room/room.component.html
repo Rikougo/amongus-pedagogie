@@ -2,6 +2,7 @@
     <div class="left-board side-pannel">
         <ul id="players">
             <li *ngFor="let player of playersList" class="player" [ngClass]="{'admin': player.admin, 'self': player.id === self?.id}">
+                <i class="fas fa-user-shield admin-icon" *ngIf="player.admin"></i>
                 <div class="name">{{ player.name }}</div>
             </li>
         </ul>
@@ -27,7 +28,7 @@
                     <p class="taskTitle">{{ task.key }}</p>
                     <div class="taskForm">
                         <input class="taskInput" type="text" name="text" [disabled]="task.value.completed" placeholder="Code..." [ngClass]="{'failed': task.value.failed}" [ngModel]="tasksInput.get(task.key)" (ngModelChange)="tasksInput.set(task.key, $event)">
-                        <input class="taskButton" type="button" (click)="sendCode(task.key)" [disabled]="task.value.completed" value=">">
+                        <button class="taskButton" type="button" (click)="sendCode(task.key)" [disabled]="task.value.completed" ><i class="far fa-paper-plane"></i></button>
                     </div>
                 </li>
             </ul>
@@ -37,7 +38,7 @@
     <div class="right-board side-pannel">
         <div *ngIf="gameState === 'PLAYING' || gameState === 'MEETING'; else rightOff">
             <ul id="codesFeed">
-                <li *ngFor="let payload of codesFeed">
+                <li *ngFor="let payload of codesFeed" class="code">
                     <b>[{{ payload.at | date:'HH:mm' }}]</b> {{ payload.player }} a entré un code.
                 </li>
             </ul>

@@ -65,3 +65,17 @@ module.exports = {
         });
     }
 };
+
+module.exports = function (app) {
+    return function (fastify, opts, done) {
+        fastify.get('/createRoom', (request, reply) => {
+            request.log.info("Creating room.");
+
+            let id = _generateRandomRoom(app, app.rooms, Application.loadTasks());
+
+            reply.send({ roomId: id });
+        });
+
+        done();
+    };
+}

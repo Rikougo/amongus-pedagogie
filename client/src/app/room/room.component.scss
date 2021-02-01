@@ -1,22 +1,35 @@
+$base-font: monospace;
+
+$device-border: 5px solid rgb(146, 148, 148);
+
 .side-pannel {
     min-width: 10vw;
+    background: #aec7dd;
 }
 
 .left-board {
-    border-right: 1px solid black;
-
+    border-right: $device-border;
     
     #players {
         padding-inline-start: 0;
         display: flex;
         flex-direction: column;
 
-        align-items: center;
-
         .player {
+            width: auto;
+            padding: 0.5em;
+            margin: 0.25em 0.5em 0.25em 0.5em;
+            border-radius: 5px;
+
             display: flex;
             flex-direction: row;
-            align-items: center;
+            justify-content: flex-start;
+
+            font: 100% $base-font;
+            background: #e9f1f8;
+            box-shadow: 2px 2px 0 #7f8d9d;
+
+            .name { margin-left: auto; margin-right: auto; }
         }
         
         .player.self {
@@ -26,17 +39,25 @@
 }
 
 .right-board {
-    border-left: 1px solid black;
-    padding: 1em;
+    border-left: $device-border;
 
     #codesFeed {
         padding-inline-start: 0;
         list-style: none;
+        width: auto;
     
         display: flex;
         flex-direction: column;
-    
         align-items: center;
+
+        .code {
+            width: -webkit-fill-available;
+            padding: 0.5em;
+            font: 100% $base-font;
+
+            background: rgb(255,255,255);
+            border-bottom: 1px solid black;
+        }
     }
 
     #infoFeed {
@@ -63,6 +84,16 @@
 
     text-align: center;
     transition-duration: 0.4s;
+
+    #lobby {
+        border-radius: 10px;
+        border: $device-border;
+        padding: 1em 2.5em 1em 2.5em;
+
+        background: #aec7dd;
+
+        font: 100% $base-font;
+    }
 
     .game.alive {
         background: #b9ff6e;
