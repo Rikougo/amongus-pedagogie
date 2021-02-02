@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  API_ENDPOINT: "http://amongus.sakeiru.dev/server"
+  API_ENDPOINT: "https://amongus.sakeiru.dev/server"
 };
