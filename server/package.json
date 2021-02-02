@@ -32,6 +32,7 @@
   "dependencies": {
     "express": "^4.17.1",
     "fastify": "^3.11.0",
+    "fastify-cors": "^5.2.0",
     "nodemon": "^2.0.6",
     "pug": "^3.0.0",
     "simple-node-logger": "^18.12.24",

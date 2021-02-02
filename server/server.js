@@ -4,8 +4,11 @@
 const Application = require("./src/lib/application");
 const app = new Application();
 const fastify = require("fastify")({ logger: true });
+
+const FRONT_ENDPOINT = process.env.CLIENT_ORIGIN || "http://localhost:4200";
 const PORT = process.env.PORT || 3000;
 
+fastify.register(require("fastify-cors"), {origin: FRONT_ENDPOINT});
 fastify.register(require('./src/routes/api')(app), { prefix: "/api"});
 
 const start = (async () => {
@@ -19,7 +22,7 @@ const start = (async () => {
 
 const io = require("socket.io")(fastify.server, {
     cors: {
-      origin: "http://localhost:4200",
+      origin: FRONT_ENDPOINT,
       methods: ["GET", "POST"],
       credentials: true
     }
