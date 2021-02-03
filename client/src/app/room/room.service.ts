@@ -21,13 +21,15 @@ export class RoomService {
 
     getGameState() : Observable<string> {
         return new Observable((observer) => {
-            this.socket.on("successJoin", (payload: {gamestate: string}) => {
+            const callback = (payload: {gamestate: string}) => {
                 observer.next(payload.gamestate);
-            });
+            }
 
-            this.socket.on("gameStart", (payload: {gamestate: string}) => {
-                observer.next(payload.gamestate);
-            });
+            this.socket.on("successJoin", callback);
+            this.socket.on("gameStart", callback);
+            this.socket.on("startMeeting", callback);
+            this.socket.on("ejecting", callback);
+            this.socket.on("endMeeting", callback);
         });
     }
 
@@ -70,31 +72,22 @@ export class RoomService {
     getPlayers() : Observable<Player[]> {
         // return this.socket.fromEvent<{players: Player[]}>("updatePlayers");
         return new Observable((observer) => {
-            this.socket.on("updatePlayers", (payload: {players: Player[]}) => {
+            const callback = (payload: {players: Player[]}) => {
                 let players : Player[] = [];
-
+    
                 payload.players.forEach((player) => {
                     if (player.alive !== undefined)
                         players.push(player);
                     else
                         players.push({...player, alive: true});
                 });
-
+    
                 observer.next(players);
-            });
+            }
 
-            this.socket.on("successJoin", (payload: {players: Player[]}) => {
-                let players : Player[] = [];
-
-                payload.players.forEach((player) => {
-                    if (player.alive !== undefined)
-                        players.push(player);
-                    else
-                        players.push({...player, alive: true});
-                });
-
-                observer.next(players);
-            });
+            this.socket.on("updatePlayers", callback);
+            this.socket.on("successJoin", callback);
+            this.socket.on("startMeeting", callback);
         })
     }
 
@@ -118,5 +111,13 @@ export class RoomService {
 
     sendTaskCode(taskId: string, code: string) {
         this.socket.emit("taskCode", {taskID: taskId, code: code});
+    }
+
+    sendBuzz() {
+        this.socket.emit("meetingButton");
+    }
+
+    reset() {
+        this.socket.disconnect();
     }
 }

@@ -19,7 +19,9 @@ export class RoomComponent implements OnInit, OnDestroy {
     gameState: string = "CONNECTING";
     tasks: {[name: string] : { content : string | undefined, completed: boolean, failed: boolean}} = {};
     tasksInput: Map<string, string> = new Map();
+
     codesFeed: {player: string, at: Date}[] = [];
+    minCode : number = 5;
 
     roomId: string;
     name: string;
@@ -36,22 +38,22 @@ export class RoomComponent implements OnInit, OnDestroy {
         this.name = this.router.snapshot.paramMap.get("name") ?? "";
     }
 
+    /**
+     * Manage all subscriptions to room service observables and then join room
+     */
     ngOnInit(): void {
         this.subscriptions.push(
             this.roomService.getGameState().subscribe((gamestate) => {
+                console.log(`New state ${gamestate}`);
                 this.gameState = gamestate;
             })
         );
 
         this.subscriptions.push(
             this.roomService.getSelf().subscribe((player) => {
-                if (!this.self) {
-                    this.self = new Player();
-                }
+                if (!this.self) this.self = new Player();
 
                 Object.assign(this.self, player);
-
-                console.log(this.self);
             })
         );
 
@@ -70,7 +72,6 @@ export class RoomComponent implements OnInit, OnDestroy {
         this.subscriptions.push(
             this.roomService.getTasks().subscribe((tasks) => {
                 this.tasks = tasks;
-                console.log(this.tasks, tasks);
             })
         );
 
@@ -96,6 +97,10 @@ export class RoomComponent implements OnInit, OnDestroy {
         this.roomService.startGame();
     }
 
+    /**
+     * Send code to room service and then clear input.
+     * @param taskId 
+     */
     sendCode(taskId: string) : void {
         if (this.tasksInput.get(taskId)) {
             this.roomService.sendTaskCode(taskId, this.tasksInput.get(taskId)!)
@@ -104,7 +109,15 @@ export class RoomComponent implements OnInit, OnDestroy {
         }
     }
 
+    pressBuzz() : void {
+        this.roomService.sendBuzz();
+    }
+
+    /**
+     * Take care of clearing all subscriptions and closing socket connection
+     */
     ngOnDestroy() : void {
         this.subscriptions.forEach(v => v.unsubscribe());
+        this.roomService.reset();
     }
 }

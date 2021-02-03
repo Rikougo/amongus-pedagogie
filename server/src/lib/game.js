@@ -6,10 +6,11 @@ const { TasksData, Task, TasksList } = require("./types");
  */
 class Game {
     static States = {
-        WAITING: "WAITING",
-        PLAYING: "PLAYING",
-        MEETING: "MEETING",
-        ENDING:  "ENDING"
+        WAITING:  "WAITING",
+        PLAYING:  "PLAYING",
+        MEETING:  "MEETING",
+        EJECTING: "EJECTING",
+        ENDING:   "ENDING"
     };
 
     static Win = {
@@ -20,6 +21,8 @@ class Game {
 
     static LIMIT = 6;
     static MINIMUM = 4;
+
+    meetingTime = 5;
     
     /**
      * @param {Application} app
@@ -56,6 +59,16 @@ class Game {
          * @type {string} Game.States
          */
         this.state = Game.States.WAITING;
+
+        /**
+         * @type {Object.<string, string[]>} map of targeted players and whos has voted for them
+         */
+        this._votes = undefined;
+
+        /**
+         * @type {string[]} list of player that already has voted during the current meeting
+         */
+        this._hasVoted = [];
 
         this.log("Created room.");
     }
@@ -98,15 +111,17 @@ class Game {
     }
 
     /**
-     * @return {{id: string, name: string, admin: boolean}[]}
+     * @param {boolean} [watchAlive] if true will return alive flag
+     * @return {{id: string, name: string, admin: boolean, alive: boolean | undefined}[]}
      */
-    playersList() {
+    playersList(watchAlive) {
         let list = [];
 
         this.players.forEach(player => list.push({
             id: player.id,
             name: player.name,
-            admin: player.id === this.admin
+            admin: player.id === this.admin,
+            alive: watchAlive ? player.alive : undefined
         }));
 
         return list;
@@ -162,7 +177,6 @@ class Game {
     }
 
     /**
-     * 
      * @param {string} playerSocketId 
      */
     kill(playerSocketId) {
@@ -170,6 +184,44 @@ class Game {
             throw new Error("Unknown player.");
         
         this.players.get(playerSocketId).alive = false;
+    }
+
+    startMeeting() {
+        if (this.state === Game.States.MEETING) return;
+
+        this.state = Game.States.MEETING;
+        this._votes = {"skip": []};
+        this._hasVoted = [];
+
+        this.players.forEach((v) => this._votes[v.id] = []);
+    }
+
+    /**
+     * 
+     * @param {string} source source player id
+     * @param {string} target target player id
+     */
+    voteFor(source, target) {
+        if (this.state !== Game.States.MEETING || this._hasVoted.include(source)) return;
+
+        this._hasVoted.push(source);
+
+        if (this._votes[target])
+            this._votes[target].push(source);
+        else
+            throw new UnknownTargetError(target, source);
+    }
+
+    endMeeting() {
+        if (this.state !== Game.States.MEETING) return;
+
+        const votes = this._votes;
+
+        this.state = Game.States.PLAYING;
+        this._votes = undefined;
+        this._hasVoted = undefined;
+
+        return votes;
     }
 
     /**
@@ -250,6 +302,17 @@ class Game {
         this._leftPlayers.clear();
 
         this.state = Game.States.WAITING;
+    }
+}
+
+class UnknownTargetError extends Error {
+    /**
+     * @param {string} target 
+     * @param {string} source
+     */
+    constructor(target, source) {
+        super(`Uknown target ${target} from ${source}`);
+        this.name = "UnkownTargetError";
     }
 }
 

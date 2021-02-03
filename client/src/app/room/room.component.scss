@@ -3,14 +3,21 @@ $base-font: monospace;
 $device-border: 5px solid rgb(146, 148, 148);
 
 .side-pannel {
-    min-width: 10vw;
+    width: 20vw;
     background: #aec7dd;
+
+    display: flex;
+    flex-direction: column;
+
+    justify-content: flex-start;
+    align-items: center;
 }
 
 .left-board {
     border-right: $device-border;
     
     #players {
+        width: 100%;
         padding-inline-start: 0;
         display: flex;
         flex-direction: column;
@@ -71,6 +78,18 @@ $device-border: 5px solid rgb(146, 148, 148);
         .feed.error {
             color: #ff6e6e;
         }
+    }
+
+    #meetingBuzz {
+        justify-self: flex-end;
+        margin-top: auto;
+        margin: auto 0.5em 0.5em 0.5em;
+        padding: 0.5em;
+        
+        border-radius: 5em;
+        height: 5em;
+        width: 5em;
+        border: none;
     }
 }
    

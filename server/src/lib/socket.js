@@ -12,7 +12,7 @@ class SocketHandler {
         START_GAME: "startGame",
         TASK_CODE: "taskCode",
         DISCONNECT: "disconnect",
-        MEETING_BUTTON: "meetingButton"
+        MEETING: "meetingButton"
     }
 
     static ClientEvents = {
@@ -23,6 +23,10 @@ class SocketHandler {
         SUCCESS_TASK: "successTask",
         FAILED_TASK: "failedTask",
         KILLED: "killed",
+        START_MEETING: "startMeeting",
+        PLAYER_VOTED: "playerVoted",
+        EJECTING: "ejecting",
+        END_MEETING: "endMeeting",
         GAME_START: "gameStart"
     }
 
@@ -41,6 +45,7 @@ class SocketHandler {
        socket.on(SocketHandler.ServerEvents.JOIN_ROOM,  (payload) => this.joinRoom(socket, payload));
        socket.on(SocketHandler.ServerEvents.START_GAME, (payload) => this.startGame(socket, payload));
        socket.on(SocketHandler.ServerEvents.TASK_CODE,  (payload) => this.taskCode(socket, payload));
+       socket.on(SocketHandler.ServerEvents.MEETING,    (payload) => this.meetingButton(socket, payload));
        socket.on(SocketHandler.ServerEvents.DISCONNECT, (payload) => this.disconnect(socket, payload));
     }
 
@@ -185,12 +190,44 @@ class SocketHandler {
     }
 
     /**
-     * 
      * @param {Socket} socket 
      * @param {undefined} payload 
      */
     meetingButton(socket, payload = undefined) {
+        const roomID = this.app.playersRoom[socket.id];
+        const room = this.app.rooms[roomID];
 
+        room.startMeeting();
+
+        this.app.io.to(roomID).emit(SocketHandler.ClientEvents.START_MEETING, {gamestate: Game.States.MEETING, players: room.playersList()});
+        
+        setTimeout(() => {
+            const votes = room.endMeeting();
+
+            this.app.io.to(roomID).emit(SocketHandler.ClientEvents.EJECTING, {gamestate: Game.States.EJECTING, votes: votes});
+
+            setTimeout(() => {
+                this.app.io.to(roomID).emit(SocketHandler.ClientEvents.END_MEETING, {gamestate: Game.States.PLAYING});
+            }, 5000);
+        }, room.meetingTime * 1000);
+    }
+
+    /**
+     * @param {Socket} socket 
+     * @param {{target: string}} payload 
+     */
+    voteFor(socket, payload) {
+        const roomID = this.app.playersRoom[socket.id];
+        const room = this.app.rooms[roomID];
+        const player = room.players.get(socket.id);
+
+        try {
+            room.vote(socket.id, payload.target);
+
+            this.app.io.to(roomID).emit(SocketHandler.ClientEvents.PLAYER_VOTED, {target: { name: player.name, id: player.id }});
+        } catch (e) {
+            socket.emit(SocketHandler.ClientEvents.ERROR, e);
+        }
     }
 
     /**

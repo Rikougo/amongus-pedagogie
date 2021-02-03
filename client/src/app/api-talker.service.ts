@@ -15,6 +15,7 @@ export class ApiTalkerService {
     constructor(private http: HttpClient) { }
 
     getNewRoom() {
+        console.log(`Calling ${this.newRoomUrl}`);
         return this.http.get(this.newRoomUrl).pipe(catchError(this.handleError));
     }
 

@@ -18,6 +18,7 @@
 
             <div class="stateGroup">
                 <p id="state"> {{ gameState }}</p>
+                <!-- ! TO CHANGE -->
                 <button id="startGame" (click)=startGame() [disabled]="!self.admin || playersList.length < 4">Lancer la partie</button>
             </div>
         </div>
@@ -33,16 +34,28 @@
                 </li>
             </ul>
         </div>
+
+        <div class="meeting" *ngIf="gameState === 'MEETING' && self" [ngClass]="{'alive': self.alive}">
+            <h1>MEETING</h1>
+            <p>Not implemented yet.</p>
+        </div>
+
+        <div class="ejecting" *ngIf="gameState === 'EJECTING'">
+            <h1>EJECTING</h1>
+            <p>Not implemented yet.</p>
+        </div>
     </div>
 
     <div class="right-board side-pannel">
-        <div *ngIf="gameState === 'PLAYING' || gameState === 'MEETING'; else rightOff">
+        <ng-container *ngIf="gameState === 'PLAYING' || gameState === 'MEETING'; else rightOff">
             <ul id="codesFeed">
                 <li *ngFor="let payload of codesFeed" class="code">
                     <b>[{{ payload.at | date:'HH:mm' }}]</b> {{ payload.player }} a entré un code.
                 </li>
             </ul>
-        </div>
+
+            <button id="meetingBuzz" (click)="pressBuzz()" [disabled]="codesFeed.length < minCode && gameState !== 'MEETING'"></button> 
+        </ng-container>
 
         <ng-template #rightOff>
             <ul id="infoFeed">
