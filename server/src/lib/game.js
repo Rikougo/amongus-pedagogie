@@ -1,5 +1,5 @@
 const Application = require("./application");
-const { TasksData, Task, TasksList } = require("./types");
+const { TasksData, TasksList } = require("./types");
 
 /**
  * @typedef {Game} Game
@@ -17,19 +17,14 @@ class Game {
         NONE: "None",
         IMPOSTORS: "IMPOSTORS",
         CREWMATES: "CREWMATES"
-    }
-
-    static LIMIT = 6;
-    static MINIMUM = 4;
-
-    meetingTime = 5;
+    };
     
     /**
      * @param {Application} app
      * @param {string} roomID 
      * @param {TasksData} tasksData 
      */
-    constructor(app, roomID, tasksData) {
+        constructor(app, roomID, tasksData) {
         /**
          * @type {Application}
          */
@@ -39,6 +34,11 @@ class Game {
          * @type {string}
          */
         this.id = roomID;
+
+        /**
+         * @type {Config}
+         */
+        this.config = new Config();
 
         /**
          * @type {type.TasksData}
@@ -82,7 +82,7 @@ class Game {
         if (this.state !== Game.States.WAITING)
             throw new Error(`Joining non-waiting room ${this.id}`);
 
-        if (this.players.length === Game.LIMIT) 
+        if (this.players.length === this.config.maxRoomPlayers) 
             throw new Error(`Full room error at room ${this.id}`);
         
         this.players.set(playerSocketId, new Player(playerSocketId, name));
@@ -128,12 +128,11 @@ class Game {
     }
 
     /**
-     * 
      * @param {string} tasksType 
      */
     startGame(tasksType) {
-        if (this.players.size < Game.MINIMUM) {
-            throw new Error(`Can't start game with less than ${Game.MINIMUM} players.`);
+        if (this.players.size < Config.MINIMUM_PLAYER) {
+            throw new Error(`Can't start game with less than ${Config.MINIMUM_PLAYER} players.`);
         }
 
         console.log("startGame");
@@ -165,7 +164,7 @@ class Game {
 
             player.assignRole(Player.Role.CREWMATE, pTasks);
 
-            impostorsTasks[player.id] = {...tasksData.impostors[crewmates], completed: false};
+            impostorsTasks[player.id] = {...tasksData.impostors[crewmates], target: {name: player.name, id: player.id}, completed: false};
             crewmates--;
         }
 
@@ -186,6 +185,9 @@ class Game {
         this.players.get(playerSocketId).alive = false;
     }
 
+    /**
+     * change game state and init all meeting's related vars
+     */
     startMeeting() {
         if (this.state === Game.States.MEETING) return;
 
@@ -197,9 +199,11 @@ class Game {
     }
 
     /**
-     * 
+     * add a vote for the target (by the source)
+     * if source has already voted it'll just ignore the call
      * @param {string} source source player id
      * @param {string} target target player id
+     * @throws {UnknownTargetError} if the target can't be found
      */
     voteFor(source, target) {
         if (this.state !== Game.States.MEETING || this._hasVoted.include(source)) return;
@@ -212,6 +216,9 @@ class Game {
             throw new UnknownTargetError(target, source);
     }
 
+    /**
+     * reset all meeting related var and return the result of votes
+     */
     endMeeting() {
         if (this.state !== Game.States.MEETING) return;
 
@@ -237,7 +244,7 @@ class Game {
             if (player.role === Player.Role.CREWMATE) {
                 crewmatesAlive++;
 
-                Object.entries(player.tasks).forEach(([_, value]) => { if (!value.completed) tasksCompleted = false; });
+                Object.values(player.tasks).forEach((value) => { if (!value.completed) tasksCompleted = false; });
             } else {
                 impostorsAlive++;
             }
@@ -295,7 +302,7 @@ class Game {
     }
 
     /**
-     * 
+     * Clear all vars that change game's data, the room will still be usable
      */
     reset() {
         this.players.clear();
@@ -313,6 +320,54 @@ class UnknownTargetError extends Error {
     constructor(target, source) {
         super(`Uknown target ${target} from ${source}`);
         this.name = "UnkownTargetError";
+    }
+}
+
+/**
+ * @typedef {Config} Config
+ */
+class Config {
+    static MINIMUM_PLAYER = 4;
+    static MAXIMUM_PLAYERS = 10;
+
+    /**
+     * @type {number}
+     */
+    maxRoomPlayers;
+
+    /**
+     * @type {number}
+     */
+    impostorsAmount;
+
+    /**
+     * @type {string} task type see tasks json
+     */
+    taskType;
+
+
+    /**
+     * @type {number} unit
+     */
+    meetingCodesRequired;
+
+    /**
+     * @type {number} seconds
+     */
+    meetingTime;
+
+    /**
+     * @type {number} seconds
+     */
+    ejectingTime;
+
+    constructor() {
+        this.impostorsAmount = 1;
+        this.maxRoomPlayers = Config.MAXIMUM_PLAYERS;
+        this.taskType = "default"
+        this.meetingCodesRequired = 5;
+        this.meetingTime = 5;
+        this.ejectingTime = 2;
     }
 }
 

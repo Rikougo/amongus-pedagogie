@@ -5,7 +5,7 @@
 
 /**
  * @typedef {{content?: string | undefined, code: string, completed: boolean}} Task
- * @typedef {Object.<string, Task>} TasksList
+ * @typedef {Object.<string | {name: string, id: string}, Task>} TasksList
  * @typedef {Object.<string, {crewmates : TasksList, impostor : TasksList}>} TasksData
  */
 

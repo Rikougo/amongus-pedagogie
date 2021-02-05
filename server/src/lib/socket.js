@@ -16,8 +16,8 @@ class SocketHandler {
     }
 
     static ClientEvents = {
-        UPDATE_PLAYERS: "updatePlayers",
         ERROR: "error",
+        UPDATE_PLAYERS: "updatePlayers",
         SUCCESS_JOIN: "successJoin",
         FEED_TASK: "feedTask",
         SUCCESS_TASK: "successTask",
@@ -63,7 +63,12 @@ class SocketHandler {
         this.app.logger.info(`${socket.id} has joined the room ${roomId}`);
 
         if (!roomId) {
-            socket.emit(SocketHandler.ClientEvents.ERROR, "Please specify a correct room id.");
+            socket.emit(
+                SocketHandler.ClientEvents.ERROR, 
+                { 
+                    errType: "wrongRoomIdError",
+                    message: "Please specify a correct room id."
+                });
             return;
         }
 
@@ -89,7 +94,8 @@ class SocketHandler {
         socket.emit(SocketHandler.ClientEvents.SUCCESS_JOIN, {
             gamestate: room.state,
             players: playersList,
-            player: {id: socket.id, name: name, admin: room.admin === socket.id}
+            player: {id: socket.id, name: name, admin: room.admin === socket.id},
+            config: room.config
         });
 
         socket.to(roomId).emit(SocketHandler.ClientEvents.UPDATE_PLAYERS, {
@@ -104,8 +110,6 @@ class SocketHandler {
     startGame(socket, payload = undefined) {
         const roomID = this.app.playersRoom[socket.id];
         const room = this.app.rooms[roomID];
-
-        console.log("socket startGame");
 
         const { tasksType } = payload;
 
@@ -124,12 +128,13 @@ class SocketHandler {
                  */
                 const tasks = {};
 
-                Object.entries(player.tasks).forEach(([key, value]) => tasks[key] = {completed: value.completed, content: value.content});
+                Object.entries(player.tasks).forEach(([key, value]) => tasks[key] = value);
 
-                this.app.io.of("/").sockets.get(socketID).emit("gameStart", {
+                this.app.io.of("/").sockets.get(socketID).emit(SocketHandler.ClientEvents.GAME_START, {
                     gamestate: room.state,
                     role: player.role,
-                    tasks: tasks
+                    tasks: tasks,
+                    config: room.config
                 });
             });
         } catch (err) {
@@ -143,7 +148,7 @@ class SocketHandler {
      * @param {{taskID: string, code: string}} payload 
      */
     taskCode(socket, payload = undefined) {
-        this.app.logger.debug("Code received.");
+        // this.app.logger.debug("Code received.");
 
         const roomID = this.app.playersRoom[socket.id];
         const room = this.app.rooms[roomID];
@@ -153,11 +158,26 @@ class SocketHandler {
         const task = player.tasks[taskID];
 
         if (!task) {
-            socket.emit("error", "Sending code to a non-existing task.");
+            socket.emit(
+                SocketHandler.ClientEvents.ERROR, 
+                {
+                    errType: "unkownTaskError",
+                    message: "Sending code to a non-existing task."
+                }
+            );
             return;
         }
 
-        this.app.io.to(roomID).emit(SocketHandler.ClientEvents.FEED_TASK, {playerName: player.name, at: new Date()});
+        this.app.io.to(roomID).emit(
+            SocketHandler.ClientEvents.FEED_TASK, 
+            {
+                player: {
+                    name: player.name, 
+                    id: player.id
+                },
+                at: new Date()
+            }
+        );
 
         if (player.role === Player.Role.CREWMATE) {
             if (code === task.code) {
@@ -178,7 +198,7 @@ class SocketHandler {
 
                 target.alive = false;
 
-                this.app.io.of("/").sockets.get(target.id).emit(SocketHandler.ClientEvents.KILLED, {killer: player.name});
+                this.app.io.of("/").sockets.get(target.id).emit(SocketHandler.ClientEvents.KILLED, {killer: {name: player.name, id: player.id}});
 
                 socket.emit(SocketHandler.ClientEvents.SUCCESS_TASK, {taskID: taskID});
             } else {
@@ -190,6 +210,8 @@ class SocketHandler {
     }
 
     /**
+     * start meeting phase and add a timeout on a callback to end meeting phase based on
+     * the room's meeting time. End of meeting will result on ejecting phase for 5 seconds
      * @param {Socket} socket 
      * @param {undefined} payload 
      */
@@ -199,7 +221,7 @@ class SocketHandler {
 
         room.startMeeting();
 
-        this.app.io.to(roomID).emit(SocketHandler.ClientEvents.START_MEETING, {gamestate: Game.States.MEETING, players: room.playersList()});
+        this.app.io.to(roomID).emit(SocketHandler.ClientEvents.START_MEETING, {gamestate: room.state, players: room.playersList()});
         
         setTimeout(() => {
             const votes = room.endMeeting();
@@ -207,9 +229,9 @@ class SocketHandler {
             this.app.io.to(roomID).emit(SocketHandler.ClientEvents.EJECTING, {gamestate: Game.States.EJECTING, votes: votes});
 
             setTimeout(() => {
-                this.app.io.to(roomID).emit(SocketHandler.ClientEvents.END_MEETING, {gamestate: Game.States.PLAYING});
-            }, 5000);
-        }, room.meetingTime * 1000);
+                this.app.io.to(roomID).emit(SocketHandler.ClientEvents.END_MEETING, {gamestate: room.state});
+            }, room.config.ejectingTime * 1000);
+        }, room.config.meetingTime * 1000 );
     }
 
     /**
@@ -226,7 +248,7 @@ class SocketHandler {
 
             this.app.io.to(roomID).emit(SocketHandler.ClientEvents.PLAYER_VOTED, {target: { name: player.name, id: player.id }});
         } catch (e) {
-            socket.emit(SocketHandler.ClientEvents.ERROR, e);
+            socket.emit(SocketHandler.ClientEvents.ERROR, {errType: e.name, message: e.message});
         }
     }
 
@@ -238,7 +260,7 @@ class SocketHandler {
         const roomID = this.app.playersRoom[socket.id];
 
         if (!roomID) {
-            socket.emit(SocketHandler.ClientEvents.ERROR, "Unknown socket id.");
+            socket.emit(SocketHandler.ClientEvents.ERROR, {errType: "UnknownClientError", message: "Unknown client disconnecting."});
             return;
         }
 
@@ -251,8 +273,9 @@ class SocketHandler {
 
         room.leave(socket.id);
 
-        if (room.empty) { room.reset() }
-        else {
+        if (room.empty) { 
+            room.reset() 
+        } else {
             socket.to(roomID).emit(SocketHandler.ClientEvents.UPDATE_PLAYERS, {
                 players: room.playersList()
             });
@@ -270,12 +293,13 @@ class SocketHandler {
     _step(roomID, room) {
         const winState = room.checkWinState();
 
-        if (winState !== Game.Win.NONE)
+        if (winState !== Game.Win.NONE) {
             this.app.io.to(roomID).emit(SocketHandler.ClientEvents.FEED_TASK, {
                 impostors: room.impostors, 
                 crewmates: room.crewmates, 
                 winnerTeam: winState
             });
+        }
     }
 }
 
