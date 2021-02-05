@@ -1,8 +1,12 @@
 import { Injectable } from '@angular/core';
 import { io, Socket } from "socket.io-client";
 import { Observable } from 'rxjs';
-import { Player } from '../class/player.model';
+import { Player } from '../class/game/player.model';
 import { environment } from 'src/environments/environment';
+import { Task } from '../class/game/task.model';
+import { PartialPlayer } from '../class/game/partialplayer.model';
+import { ErrorBase } from '../class/errorbase.model';
+import { Config } from '../class/game/config.model';
 
 @Injectable({
   providedIn: 'root'
@@ -11,7 +15,9 @@ export class RoomService {
 
     socket: Socket;
 
-    constructor() {
+    constructor() { }
+
+    connect() {
         this.socket = io(environment.API_ENDPOINT, {});
     }
 
@@ -19,7 +25,15 @@ export class RoomService {
         this.socket.emit("joinRoom", {roomId: roomdId, name: name});
     }
 
-    getGameState() : Observable<string> {
+    get config() : Observable<Config> {
+        return new Observable((observer) => {
+            this.socket.on("successJoin", (payload: {config: Config}) => {
+                observer.next(payload.config);
+            });
+        });
+    }
+
+    get gameState() : Observable<string> {
         return new Observable((observer) => {
             const callback = (payload: {gamestate: string}) => {
                 observer.next(payload.gamestate);
@@ -33,7 +47,7 @@ export class RoomService {
         });
     }
 
-    getSelf() : Observable<any> {
+    get self() : Observable<Player | {alive: boolean}> {
         return new Observable((observer) => {
             this.socket.on("successJoin", (payload: {player: {name: string, id: string, admin: boolean}}) => {
                 observer.next({...payload.player, alive: true});
@@ -45,19 +59,19 @@ export class RoomService {
         });
     }
 
-    getTasks() : Observable<{[name: string] : { content : string | undefined, completed: boolean, failed: false}}> {
+    get tasks() : Observable<{[name: string] : Task}> {
         return new Observable((observer) => {
-            this.socket.on("gameStart", (payload: { tasks : {[name: string] : { content : string | undefined, completed: boolean}}}) => {
+            this.socket.on("gameStart", (payload: { tasks : {[name: string] : { content?: string, completed: boolean}}}) => {
                 let res : any = {};
 
                 Object.entries(payload.tasks).forEach(([key, value]) => {res[key] = {...value, failed: false}});
 
-                observer.next(res as {[name: string] : { content : string | undefined, completed: boolean, failed: false}});
+                observer.next(res as {[name: string] : { target?: {name: string, id: string}, content?: string, completed: boolean, failed: false}});
             });
         });
     }
 
-    updateTasks() : Observable<{taskId: string, success: boolean}> {
+    get updateTasks() : Observable<{taskId: string, success: boolean}> {
         return new Observable((observer) => {
             this.socket.on("successTask", (payload: {taskID: string}) => {
                 observer.next({taskId: payload.taskID, success: true});
@@ -69,7 +83,7 @@ export class RoomService {
         });
     }
 
-    getPlayers() : Observable<Player[]> {
+    get players() : Observable<Player[]> {
         // return this.socket.fromEvent<{players: Player[]}>("updatePlayers");
         return new Observable((observer) => {
             const callback = (payload: {players: Player[]}) => {
@@ -91,16 +105,16 @@ export class RoomService {
         })
     }
 
-    getCodesFeed() : Observable<{player: string, at: Date}> {
+    get codesFeed() : Observable<{player: PartialPlayer, at: Date}> {
         return new Observable((observer) => {
-            this.socket.on("feedTask", (payload: {playerName: string, at: Date}) => { observer.next({player: payload.playerName, at: payload.at}) });
+            this.socket.on("feedTask", (payload: {player: {name: string, id: string}, at: Date}) => { observer.next({player: payload.player, at: payload.at}) });
         });
     }
 
-    getError() : Observable<string> {
+    get error() : Observable<ErrorBase> {
         return new Observable((observer) => {
-            this.socket.on("error", (payload: string) => {
-                observer.next(payload)
+            this.socket.on("error", (payload: {errType: string, message: string}) => {
+                observer.next(payload);
             });
         });
     }

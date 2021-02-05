@@ -7,12 +7,14 @@ import { AppComponent } from './app.component';
 import { HomeComponent } from './home/home.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RoomComponent } from './room/room.component';
+import { ConfigpanComponent } from './room/components/configpan/configpan.component';
 
 @NgModule({
     declarations: [
         AppComponent,
         HomeComponent,
-        RoomComponent
+        RoomComponent,
+        ConfigpanComponent,
     ],
     imports: [
         BrowserModule,

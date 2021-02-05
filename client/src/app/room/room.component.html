@@ -1,68 +1,149 @@
-<div class="container">
-    <div class="left-board side-pannel">
-        <ul id="players">
-            <li *ngFor="let player of playersList" class="player" [ngClass]="{'admin': player.admin, 'self': player.id === self?.id}">
-                <i class="fas fa-user-shield admin-icon" *ngIf="player.admin"></i>
-                <div class="name">{{ player.name }}</div>
+<div class="flex flex-row h-full overflow-hidden">
+    <div class="w-1/5 flex flex-col bg-white items-center content-center px-2 rounded-lg shadow-md">
+        <ul id="players" class="w-full">
+            <li 
+                *ngFor="let player of playersList" 
+                class="flex flex-row w-full p-2 border-b border-gray-200 border-opacity-100" 
+                [ngClass]="{'admin': player.admin, 'self': player.id === self?.id}"
+            >
+                <!-- <i class="fas fa-user-shield admin-icon text-green-200" *ngIf="player.admin && gameState === 'WAITING'"></i> -->
+                <i class="fas fa-user-astronaut text-gray-200 text-lg"></i>
+                <div class="name mx-auto" [ngClass]="{'alive': player.alive, 'text-green-500': player.admin && gameState === 'WAITING'}">{{ player.name }}</div>
             </li>
         </ul>
+
+        <div id="actions" class="mt-auto flex flex-row  content-center items-center gap-1">
+            <button 
+                class="transition duration-200 transform rounded-full h-14 w-14 border mt-auto mb-5" 
+                [ngClass]="true?
+                    'bg-gray-200 border-gray-400 text-gray-400' :
+                    'bg-red-200 border-red-400 text-red-400 hover:bg-red-400 hover:text-white hover:scale-110'
+                "
+                [disabled]="true"
+            >
+                <i class="fas fa-heartbeat text-xl"></i>
+            </button>
+
+            <button 
+                class="transition duration-200 transform rounded-full h-14 w-14 border mt-auto mb-5" 
+                [ngClass]="true?
+                    'bg-gray-200 border-gray-400 text-gray-400' :
+                    'bg-red-200 border-red-400 text-red-400 hover:bg-red-400 hover:text-white hover:scale-110'
+                "
+                [disabled]="true"
+            >
+                <i class="fas fa-satellite-dish text-xl"></i>
+            </button>
+        </div>
     </div>
 
-    <div class="main-board">
-        <div class="connecting" *ngIf="gameState === 'CONNECTING'">
-
+    <div class="main-board flex flex-col flex-grow bg-gray-50 justify-center items-center">
+        <div id="connecting" class="" *ngIf="gameState === 'CONNECTING'">
+            <h1>CONNECTING</h1>
         </div>
 
-        <div id="lobby" *ngIf="gameState === 'WAITING' && self">
-            <h1 id="roomId">{{ roomId }}</h1>
+        <div 
+            *ngIf="gameState === 'WAITING' && self"
+            id="lobby" 
+            class="scene flex flex-col bg-white justify-center items-center p-4 rounded-lg shadow-md"
+        >
+            <h1 id="roomId" class="font-mono text-xl">{{ roomId }}</h1>
+            <p
+                id="state" 
+                class="font-bold" 
+                [ngClass]="enoughPlayers?'text-green-300':'text-red-300'"
+            > 
+                {{ gameState }}
+            </p>
+            <!-- ! TO CHANGE -->
+            <button 
+                id="startGame" 
+                [ngClass]="canStart ?
+                'hover:text-white hover:bg-green-300 text-green-500 bg-green-100 border-green-300':
+                'text-gray-300 bg-gray-100 border-gray-200'"
+                class="disabled:cursor-not-allowed transition m-2 px-2 rounded border" (click)=startGame() [disabled]="!canStart"
+            >
+                Lancer la partie
+            </button>
 
-            <div class="stateGroup">
-                <p id="state"> {{ gameState }}</p>
-                <!-- ! TO CHANGE -->
-                <button id="startGame" (click)=startGame() [disabled]="!self.admin || playersList.length < 4">Lancer la partie</button>
-            </div>
+            <app-configpan></app-configpan>
         </div>
 
-        <div class="game" *ngIf="gameState === 'PLAYING' && self" [ngClass]="{'alive': self.alive}">
+        <div 
+            id="game" 
+            class="scene flex flex-col bg-white justify-center items-center p-4 rounded-lg shadow-md" 
+            *ngIf="gameState === 'PLAYING' && self" 
+            [ngClass]="{'alive': self.alive}"
+        >
+            <p class="text-lg text-center">Tâches</p>
             <ul id="tasks">
-                <li class="task-{{ task.key }}" *ngFor="let task of tasks | keyvalue">
-                    <p class="taskTitle">{{ task.key }}</p>
-                    <div class="taskForm">
-                        <input class="taskInput" type="text" name="text" [disabled]="task.value.completed" placeholder="Code..." [ngClass]="{'failed': task.value.failed}" [ngModel]="tasksInput.get(task.key)" (ngModelChange)="tasksInput.set(task.key, $event)">
-                        <button class="taskButton" type="button" (click)="sendCode(task.key)" [disabled]="task.value.completed" ><i class="far fa-paper-plane"></i></button>
+                <li class="task-{{ task.key }} my-2" *ngFor="let task of tasks | keyvalue">
+                    <p class="text-gray-500 sm:text-sm">{{ task.value.target?.name || task.key }}</p>
+                    <div 
+                        class="hover:cursor-pointer taskForm relative rounded-md border"
+                        [ngClass]="{'border-red-200': task.value.failed, 'border-green-200': task.value.completed}" 
+                    >
+                        <input 
+                            class="taskInput focus:outline-none block w-full pl-2 pr-4 sm:text-sm rounded-md" 
+                            [ngClass]="{'bg-red-100': task.value.failed, 'bg-green-100': task.value.completed}" 
+                            type="text" 
+                            name="text" 
+                            [disabled]="task.value.completed" 
+                            [ngModel]="tasksInput.get(task.key)" 
+                            (ngModelChange)="tasksInput.set(task.key, $event)"
+                        >
+                        <div class="absolute inset-y-0 right-0 flex items-center">
+                            <button 
+                                class="disabled:cursor-not-allowed focus:outline-none taskButton transition h-full py-0 pl-2 pr-2 border-transparent bg-transparent text-white sm:text-sm" 
+                                type="button" 
+                                (click)="sendCode(task.key)" 
+                                [disabled]="task.value.completed" 
+                            >
+                                <i 
+                                    class="far fa-paper-plane text-black"
+                                    [ngClass]="{'text-red-300 hover:text-red-200': task.value.failed, 'text-green-300 hover:text-green-200': task.value.completed}"
+                                ></i>
+                            </button>
+                        </div>
                     </div>
                 </li>
             </ul>
         </div>
 
-        <div class="meeting" *ngIf="gameState === 'MEETING' && self" [ngClass]="{'alive': self.alive}">
+        <div id="meeting" class="scene flex flex-col bg-white justify-center items-center p-4 rounded-lg shadow-md" *ngIf="gameState === 'MEETING' && self" [ngClass]="{'alive': self.alive}">
             <h1>MEETING</h1>
             <p>Not implemented yet.</p>
         </div>
 
-        <div class="ejecting" *ngIf="gameState === 'EJECTING'">
+        <div id="ejecting" class="scene flex flex-col bg-white justify-center items-center p-4 rounded-lg shadow-md" *ngIf="gameState === 'EJECTING'">
             <h1>EJECTING</h1>
+            <p>Not implemented yet.</p>
+        </div>
+
+        <div id="ending" class="scene flex flex-col bg-white justify-center items-center p-4 rounded-lg shadow-md" *ngIf="gameState === 'ENDING'">
+            <h1>ENDING</h1>
             <p>Not implemented yet.</p>
         </div>
     </div>
 
-    <div class="right-board side-pannel">
-        <ng-container *ngIf="gameState === 'PLAYING' || gameState === 'MEETING'; else rightOff">
-            <ul id="codesFeed">
-                <li *ngFor="let payload of codesFeed" class="code">
-                    <b>[{{ payload.at | date:'HH:mm' }}]</b> {{ payload.player }} a entré un code.
-                </li>
-            </ul>
+    <div class="w-1/5 shadow-md flex flex-col bg-white items-center content-center px-2 rounded-lg shadow-md">
+        <ul id="codesFeed" class="w-full">
+            <li *ngFor="let payload of codesFeed" class="code">
+                <p class="text-sm"><span class="font-bold">[{{ payload.at | date:'HH:mm' }}]</span> <span>{{ payload.player.name }}</span> a entré un code.</p>
+            </li>
+        </ul>
 
-            <button id="meetingBuzz" (click)="pressBuzz()" [disabled]="codesFeed.length < minCode && gameState !== 'MEETING'"></button> 
-        </ng-container>
-
-        <ng-template #rightOff>
-            <ul id="infoFeed">
-                <li *ngFor="let payload of infoFeed" class="feed" [ngClass]="payload.level">
-                    <b>[{{ payload.at | date:'HH:mm' }}]</b> {{ payload.msg }}
-                </li>
-            </ul>
-        </ng-template>
+        <button 
+            id="meetingBuzz" 
+            class="transition duration-200 transform rounded-full h-14 w-14 border mt-auto mb-5" 
+            [ngClass]="canBuzz?
+                'bg-gray-200 border-gray-400 text-gray-400' :
+                'bg-red-200 border-red-400 text-red-400 hover:bg-red-400 hover:text-white hover:scale-110'
+                "
+            (click)="pressBuzz()" 
+            [disabled]="canBuzz"
+        >
+            <i class="fas fa-gavel text-xl"></i>
+        </button>
     </div>
 </div>

@@ -1,0 +1,47 @@
+<div id="toggler" class="w-full flex flex-row">
+    <button (click)="toggled = !toggled" class="transform transition duration-200 focus:outline-none active:outline-none hover:scale-125 outline-none text-lg mx-auto">
+        <ng-container *ngIf="toggled; else unopen">
+            <i class="fas fa-caret-up"></i>
+        </ng-container>
+    
+        <ng-template #unopen>
+            <i class="fas fa-caret-down"></i>
+        </ng-template>
+    </button>
+</div>
+
+<div id="configPannel" class="bg-transparent flex flex-col text-xs font-mono border-t" *ngIf="toggled">
+    <div class="flex flex-row my-1">
+        <div class="flex flex-col content-center items-center mx-5">
+            <label for="maximumPlayers">Limite joueurs :</label>
+            <input type="range" min="4" max="10" value="10" name="maximumPlayers">
+        </div>
+        <div class="flex flex-col content-center items-center mx-5">
+            <label for="impostorsAmount">Imposteurs :</label>
+            <button type="button" name="impostorsAmount" class="focus:outline-none active:outline-none hover:cursor-pointer cursor-pointer w-full">1</button>
+        </div>
+
+        <div class="flex flex-col content-center items-center mx-5">
+            <label for="tasksType">Feuille de tâches :</label>
+            <select name="tasksType">
+                <option *ngFor="let type of sampleTasksTypes">{{ type }}</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="flex flex-row content-center items-center my-1">
+        <div class="flex flex-col mx-1">
+            <label for="meetingTime">Temps de vote :</label>
+            <input type="range" min="15" max="150" step="5" value="50" name="meetingTime">
+        </div>
+
+        <div class="flex flex-col content-center items-center mx-5">
+            <label for="codeInterval">Code requis :</label>
+            <input type="range" min="5" max="15" value="5" name="codeInterval">
+        </div>
+        
+        <div class="flex flex-col flex-grow content-center items-center mx-5">
+            <input type="color" name="selfColor">
+        </div>
+    </div>
+</div>

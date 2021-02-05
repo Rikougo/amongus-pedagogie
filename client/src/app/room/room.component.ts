@@ -1,10 +1,13 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
-import { Player } from '../class/player.model';
+import { ActivatedRoute } from '@angular/router';
+import { Player } from '../class/game/player.model';
 
-import { switchMap } from 'rxjs/operators';
 import { RoomService } from './room.service';
 import { Subscription } from 'rxjs';
+import { Task } from '../class/game/task.model';
+import { PartialPlayer } from '../class/game/partialplayer.model';
+import { ErrorBase } from '../class/errorbase.model';
+import { Config } from '../class/game/config.model';
 
 @Component({
   selector: 'app-room',
@@ -12,20 +15,19 @@ import { Subscription } from 'rxjs';
   styleUrls: ['./room.component.scss']
 })
 export class RoomComponent implements OnInit, OnDestroy {
+    roomId: string;
+    name: string;
+    config: Config;
 
+    gameState: string = "CONNECTING";
     self: Player | undefined;
     playersList : Player[] = [];
 
-    gameState: string = "CONNECTING";
-    tasks: {[name: string] : { content : string | undefined, completed: boolean, failed: boolean}} = {};
+    tasks: {[name: string] : Task} = {};
     tasksInput: Map<string, string> = new Map();
+    codesFeed: {player: PartialPlayer, at: Date}[] = [];
 
-    codesFeed: {player: string, at: Date}[] = [];
-    minCode : number = 5;
-
-    roomId: string;
-    name: string;
-    infoFeed: {at: Date, msg: string, level: string}[] = [];
+    errorsFeed: ErrorBase[] = [];
 
     private subscriptions : Subscription[] = [];
 
@@ -35,22 +37,30 @@ export class RoomComponent implements OnInit, OnDestroy {
     )
     {
         this.roomId = this.router.snapshot.paramMap.get("roomId") ?? "";
-        this.name = this.router.snapshot.paramMap.get("name") ?? "";
+        this.name = this.router.snapshot.paramMap.get("name") ?? "WhyDontYouHaveAName";
     }
 
     /**
      * Manage all subscriptions to room service observables and then join room
      */
     ngOnInit(): void {
+        this.roomService.connect();
+
         this.subscriptions.push(
-            this.roomService.getGameState().subscribe((gamestate) => {
-                console.log(`New state ${gamestate}`);
+            this.roomService.config.subscribe((config) => {
+                this.config = config;
+                console.log(config);
+            })
+        );
+
+        this.subscriptions.push(
+            this.roomService.gameState.subscribe((gamestate) => {
                 this.gameState = gamestate;
             })
         );
 
         this.subscriptions.push(
-            this.roomService.getSelf().subscribe((player) => {
+            this.roomService.self.subscribe((player) => {
                 if (!this.self) this.self = new Player();
 
                 Object.assign(this.self, player);
@@ -58,25 +68,25 @@ export class RoomComponent implements OnInit, OnDestroy {
         );
 
         this.subscriptions.push(
-            this.roomService.getPlayers().subscribe((players) => {
+            this.roomService.players.subscribe((players) => {
                 this.playersList = players;
             })
         );
 
         this.subscriptions.push(
-            this.roomService.getCodesFeed().subscribe((task) => {
+            this.roomService.codesFeed.subscribe((task) => {
                 this.codesFeed.push(task);
             })
         );
 
         this.subscriptions.push(
-            this.roomService.getTasks().subscribe((tasks) => {
+            this.roomService.tasks.subscribe((tasks) => {
                 this.tasks = tasks;
             })
         );
 
         this.subscriptions.push(
-            this.roomService.updateTasks().subscribe((update) => {
+            this.roomService.updateTasks.subscribe((update) => {
                 if (update.success)
                     this.tasks[update.taskId].completed = true;
                 else
@@ -85,8 +95,8 @@ export class RoomComponent implements OnInit, OnDestroy {
         );
 
         this.subscriptions.push(
-            this.roomService.getError().subscribe((errorMsg: string) => {
-                this.infoFeed.push({at: new Date(), msg: errorMsg, level: "error"});
+            this.roomService.error.subscribe((err: ErrorBase) => {
+                console.log(err);
             })
         );
 
@@ -94,6 +104,7 @@ export class RoomComponent implements OnInit, OnDestroy {
     }
 
     startGame() : void {
+        console.log("yo");
         this.roomService.startGame();
     }
 
@@ -119,5 +130,17 @@ export class RoomComponent implements OnInit, OnDestroy {
     ngOnDestroy() : void {
         this.subscriptions.forEach(v => v.unsubscribe());
         this.roomService.reset();
+    }
+
+    get enoughPlayers() : boolean {
+        return this.playersList.length >= Config.MINIMUM_PLAYER;
+    }
+
+    get canStart() : boolean {
+        return (this.self?.admin!) && this.enoughPlayers;
+    }
+
+    get canBuzz() : boolean {
+        return this.config! && this.codesFeed.length < this.config.meetingCodesRequired || this.gameState !== 'PLAYING'
     }
 }

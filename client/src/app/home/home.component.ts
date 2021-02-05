@@ -30,21 +30,25 @@ export class HomeComponent implements OnInit {
     constructor(
         private router: Router,
         private apiTalker: ApiTalkerService, 
-        private formBuilder: FormBuilder) { }
+        private formBuilder: FormBuilder
+    ) { }
 
     ngOnInit(): void { }
 
     get isNameValid() : boolean { 
         let field = this.pannel.get("name");
-        return !(field?.valid!) && (this.creationAttempt || this.joinAttempt); 
+        return field?.valid!; 
     }
 
     get isCodeValid() : boolean {
         let field = this.pannel.get("roomId");
-        return (!field?.valid!) && this.joinAttempt;
+        return field?.valid!;
     }
 
     createRoom(): void {
+        const name = this.pannel.get('name');
+        this.creationAttempt = true;
+
         this.apiTalker.getNewRoom().subscribe((data: any) => { 
             const code = data.roomId;
 
@@ -56,13 +60,12 @@ export class HomeComponent implements OnInit {
 
             this.createRoomError = false;
 
-            let name = this.pannel.get('name');
-            this.creationAttempt = true;
-    
+            
             if (name && name.valid) {
                 this.creationAttempt = false;
                 this.router.navigate(["room", {roomId: code, name: name.value}]);
             }
+
         }, (_) => {
             this.createRoomError = true;
         });
