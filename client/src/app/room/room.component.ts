@@ -46,66 +46,44 @@ export class RoomComponent implements OnInit, OnDestroy {
     ngOnInit(): void {
         this.roomService.connect();
 
-        this.subscriptions.push(
+        this.subscriptions = [
             this.roomService.config.subscribe((config) => {
                 this.config = config;
-                console.log(config);
-            })
-        );
-
-        this.subscriptions.push(
+            }),
             this.roomService.gameState.subscribe((gamestate) => {
                 this.gameState = gamestate;
-            })
-        );
-
-        this.subscriptions.push(
+            }),
             this.roomService.self.subscribe((player) => {
                 if (!this.self) this.self = new Player();
 
                 Object.assign(this.self, player);
-            })
-        );
-
-        this.subscriptions.push(
+            }),
             this.roomService.players.subscribe((players) => {
                 this.playersList = players;
-            })
-        );
-
-        this.subscriptions.push(
+            }),
             this.roomService.codesFeed.subscribe((task) => {
                 this.codesFeed.push(task);
-            })
-        );
-
-        this.subscriptions.push(
+            }),
             this.roomService.tasks.subscribe((tasks) => {
                 this.tasks = tasks;
-            })
-        );
-
-        this.subscriptions.push(
+            }),
             this.roomService.updateTasks.subscribe((update) => {
                 if (update.success)
                     this.tasks[update.taskId].completed = true;
                 else
                     this.tasks[update.taskId].failed = true;
-            })
-        );
-
-        this.subscriptions.push(
+            }),
             this.roomService.error.subscribe((err: ErrorBase) => {
+                this.errorsFeed.push(err);
                 console.log(err);
             })
-        );
+        ]
 
         this.roomService.joinRoom(this.roomId, this.name);
     }
 
     startGame() : void {
-        console.log("yo");
-        this.roomService.startGame();
+        this.roomService.startGame(this.config.taskType);
     }
 
     /**
@@ -120,6 +98,14 @@ export class RoomComponent implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * 
+     */
+    updateConfig() {
+        console.log(this.config);
+        this.roomService.sendNewConfig(this.config);
+    }
+
     pressBuzz() : void {
         this.roomService.sendBuzz();
     }
@@ -132,15 +118,9 @@ export class RoomComponent implements OnInit, OnDestroy {
         this.roomService.reset();
     }
 
-    get enoughPlayers() : boolean {
-        return this.playersList.length >= Config.MINIMUM_PLAYER;
-    }
+    get enoughPlayers() : boolean { return this.playersList.length >= Config.MINIMUM_PLAYER; }
 
-    get canStart() : boolean {
-        return (this.self?.admin!) && this.enoughPlayers;
-    }
+    get canStart() : boolean { return (this.self?.admin!) && this.enoughPlayers; }
 
-    get canBuzz() : boolean {
-        return this.config! && this.codesFeed.length < this.config.meetingCodesRequired || this.gameState !== 'PLAYING'
-    }
+    get canBuzz() : boolean { return this.config! && this.codesFeed.length < this.config.meetingCodesRequired || this.gameState !== 'PLAYING' }
 }

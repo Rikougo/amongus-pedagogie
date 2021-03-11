@@ -30,6 +30,11 @@ export class RoomService {
             this.socket.on("successJoin", (payload: {config: Config}) => {
                 observer.next(payload.config);
             });
+
+            this.socket.on("updateConfig", (config: Config) => {
+                console.log("yo");
+                observer.next(config);
+            });
         });
     }
 
@@ -66,7 +71,7 @@ export class RoomService {
 
                 Object.entries(payload.tasks).forEach(([key, value]) => {res[key] = {...value, failed: false}});
 
-                observer.next(res as {[name: string] : { target?: {name: string, id: string}, content?: string, completed: boolean, failed: false}});
+                observer.next(res as {[name: string] : { target?: {name: string, id: string, color: string}, content?: string, completed: boolean, failed: false}});
             });
         });
     }
@@ -107,7 +112,7 @@ export class RoomService {
 
     get codesFeed() : Observable<{player: PartialPlayer, at: Date}> {
         return new Observable((observer) => {
-            this.socket.on("feedTask", (payload: {player: {name: string, id: string}, at: Date}) => { observer.next({player: payload.player, at: payload.at}) });
+            this.socket.on("feedTask", (payload: {player: {name: string, id: string, color: string}, at: Date}) => { observer.next({player: payload.player, at: payload.at}) });
         });
     }
 
@@ -119,7 +124,11 @@ export class RoomService {
         });
     }
 
-    startGame() {
+    sendNewConfig(config: Config) {
+        this.socket.emit("configUpdate", {config: config});
+    }
+
+    startGame(taskType: string) {
         this.socket.emit("startGame", {tasksType: "test"});
     }
 

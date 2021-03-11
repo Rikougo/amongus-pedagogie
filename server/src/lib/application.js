@@ -3,7 +3,7 @@ const { createSimpleLogger, Logger } = require("simple-node-logger");
 
 const { Socket } = require("socket.io");
 const { SocketHandler } = require("./socket");
-const { Game } = require ("./game");
+const { Game } = require ("./components/game");
 const { TasksData } = require("./types");
 
 class Application {

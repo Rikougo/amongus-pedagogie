@@ -1,4 +1,5 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Input, OnInit, Output, EventEmitter } from '@angular/core';
+import { Config } from 'src/app/class/game/config.model';
 
 @Component({
     selector: 'app-configpan',
@@ -11,9 +12,15 @@ export class ConfigpanComponent implements OnInit {
 
     sampleTasksTypes : string[] = ["default", "test", "you sure ?"];
 
+    @Input() config: Config;
+    @Output() onUpdateConfig: EventEmitter<any> = new EventEmitter();
+
     constructor() { }
 
-    ngOnInit(): void {
-    }
+    ngOnInit(): void { }
 
+    configChanged() : void {
+        console.log("elo");
+        this.onUpdateConfig.emit();
+    }
 }

@@ -9,4 +9,10 @@ export class Config {
     meetingCodesRequired: number;
     meetingTime: number;
     ejectingTime: number;
+
+    sMinimumPlayers: number;
+    sMaximumPlayers: number;
+    sTasksTypes: string[];
+    sMeetingTimeRange: {min: number, max: number};
+    sCodeRequiredRange: {min: number, max: number};
 }
