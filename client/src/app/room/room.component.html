@@ -66,7 +66,7 @@
                 Lancer la partie
             </button>
 
-            <app-configpan [config]="config" (onUpdateConfig)="updateConfig()"></app-configpan>
+            <app-configpan [config]="config" [admin]="self.admin" (onUpdateConfig)="updateConfig()"></app-configpan>
         </div>
 
         <div 

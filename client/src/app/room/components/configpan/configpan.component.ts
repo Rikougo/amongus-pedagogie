@@ -12,6 +12,7 @@ export class ConfigpanComponent implements OnInit {
 
     sampleTasksTypes : string[] = ["default", "test", "you sure ?"];
 
+    @Input() admin: boolean = false;
     @Input() config: Config;
     @Output() onUpdateConfig: EventEmitter<any> = new EventEmitter();
 

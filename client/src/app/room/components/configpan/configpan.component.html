@@ -14,16 +14,16 @@
     <div class="flex flex-row my-1">
         <div class="flex flex-col content-center items-center mx-5">
             <label for="maximumPlayers">Limite joueurs : {{ config.maxRoomPlayers }}</label>
-            <input (change)="configChanged()" type="range" min="{{ config.sMinimumPlayers }}" max="{{ config.sMaximumPlayers }}" value="10" name="maximumPlayers" [(ngModel)]="config.maxRoomPlayers">
+            <input [disabled]="!admin" (change)="configChanged()" type="range" min="{{ config.sMinimumPlayers }}" max="{{ config.sMaximumPlayers }}" value="10" name="maximumPlayers" [(ngModel)]="config.maxRoomPlayers">
         </div>
         <div class="flex flex-col content-center items-center mx-5">
             <label for="impostorsAmount">Imposteurs :</label>
-            <button type="button" name="impostorsAmount" class="focus:outline-none active:outline-none hover:cursor-pointer cursor-pointer w-full">1</button>
+            <button [disabled]="!admin" type="button" name="impostorsAmount" class="focus:outline-none active:outline-none hover:cursor-pointer cursor-pointer w-full">1</button>
         </div>
 
         <div class="flex flex-col content-center items-center mx-5">
             <label for="tasksType">Feuille de tâches :</label>
-            <select (change)="configChanged()" name="tasksType" [(ngModel)]="config.taskType">
+            <select [disabled]="!admin" (change)="configChanged()" name="tasksType" [(ngModel)]="config.taskType">
                 <option *ngFor="let type of config.sTasksTypes">{{ type }}</option>
             </select>
         </div>
@@ -32,12 +32,12 @@
     <div class="flex flex-row content-center items-center my-1">
         <div class="flex flex-col mx-1">
             <label for="meetingTime">Temps de vote : {{ config.meetingTime }}</label>
-            <input (change)="configChanged()" type="range" min="{{ config.sMeetingTimeRange.min }}" max="{{ config.sMeetingTimeRange.max }}" step="5" [(ngModel)]="config.meetingTime" name="meetingTime">
+            <input [disabled]="!admin" (change)="configChanged()" type="range" min="{{ config.sMeetingTimeRange.min }}" max="{{ config.sMeetingTimeRange.max }}" step="5" [(ngModel)]="config.meetingTime" name="meetingTime">
         </div>
 
         <div class="flex flex-col content-center items-center mx-5">
             <label for="codeInterval">Code requis : {{ config.meetingCodesRequired }}</label>
-            <input (change)="configChanged()" type="range" min="{{ config.sCodeRequiredRange.min }}" max="{{ config.sCodeRequiredRange.max }}" [(ngModel)]="config.meetingCodesRequired" name="codeInterval">
+            <input [disabled]="!admin" (change)="configChanged()" type="range" min="{{ config.sCodeRequiredRange.min }}" max="{{ config.sCodeRequiredRange.max }}" [(ngModel)]="config.meetingCodesRequired" name="codeInterval">
         </div>
     </div>
 </div>
