@@ -30,6 +30,10 @@ export class RoomComponent implements OnInit, OnDestroy {
     errorsFeed: ErrorBase[] = [];
 
     private subscriptions : Subscription[] = [];
+    
+    meetingRemaining : number;
+    private _meetingStart: number | undefined;
+    private _meetingTimer : NodeJS.Timeout;
 
     constructor(
         private router: ActivatedRoute,
@@ -52,6 +56,17 @@ export class RoomComponent implements OnInit, OnDestroy {
             }),
             this.roomService.gameState.subscribe((gamestate) => {
                 this.gameState = gamestate;
+
+                if (this.gameState === 'MEETING') {
+                    this._meetingStart = Date.now();
+                    this._meetingTimer = setInterval(
+                        () => this.meetingRemaining = this._meetingRemaining(),
+                        500
+                    );
+                } else {
+                    this._meetingStart = undefined;
+                    clearInterval(this._meetingTimer);
+                }
             }),
             this.roomService.self.subscribe((player) => {
                 if (!this.self) this.self = new Player();
@@ -123,4 +138,6 @@ export class RoomComponent implements OnInit, OnDestroy {
     get canStart() : boolean { return (this.self?.admin!) && this.enoughPlayers; }
 
     get canBuzz() : boolean { return this.config! && this.codesFeed.length < this.config.meetingCodesRequired || this.gameState !== 'PLAYING' }
+
+    _meetingRemaining() : number { return this._meetingStart ? Math.ceil(((this._meetingStart + this.config.meetingTime * 1000) - Date.now()) / 1000) : 0}
 }

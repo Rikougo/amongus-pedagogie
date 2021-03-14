@@ -113,6 +113,8 @@
         <div id="meeting" class="scene flex flex-col bg-white justify-center items-center p-4 rounded-lg shadow-md" *ngIf="gameState === 'MEETING' && self" [ngClass]="{'alive': self.alive}">
             <h1>MEETING</h1>
             <p>Not implemented yet.</p>
+
+            <p>{{ meetingRemaining }} s</p>
         </div>
 
         <div id="ejecting" class="scene flex flex-col bg-white justify-center items-center p-4 rounded-lg shadow-md" *ngIf="gameState === 'EJECTING'">
