@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Création d'exercices</title>
+        <meta charset="UTF-8" />
+        <link href="style.css" rel="stylesheet" type="text/css">
+    </head>
+
+    <body>
+        <section class="exercice-form">
+            <h1>Créer un exercice</h1>
+            <p>Remplissez les champs pour créer un exercice.</p>
+            
+            <form>           
+                <div class="input-group">
+                    <label for="nomEx">nom de l'exercice</label>
+                    <input id="nomEx" name="nomEx" type="text" required>
+                </div>
+              
+                <div class="input-group">
+                    <label for="matiere">Matière de l'exercice</label>
+                    <select id="matiere" name="matiere">
+                        <option>Mathématiques</option>
+                        <option>Physique-Chimie</option>
+                        <option>Histoire</option>
+                        <option>Informatique</option>
+                        <option>-Autre-</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label for="type">Type d'exercice</label>
+                    <select id="type" name="type" onclick="menuType(this);">
+                        <option>-Choisir un type-</option>
+                        <option>Vrai / Faux</option>
+                        <option>QCM</option>
+                        <option>Calcul</option>
+                        <option>Réponse Simple</option>
+                    </select>
+                </div>
+              
+                <div class="input-group">
+                    <label for="intitule">Intitulé de la question</label>
+                    <textarea id="intitule" name="intitule" rows="6" cols="100" required></textarea>
+                </div>
+
+                <div class="input-group" id="reponse"></div>
+
+                <button type="submit">Générer</button>
+            </form>
+        </section>
+          
+        <div class="results">
+            <h2>Exercice json</h2>
+            <pre></pre>
+        </div>
+
+        <script src="genEx.js"></script>
+    </body>
+</html>

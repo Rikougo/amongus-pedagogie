@@ -1,0 +1,18 @@
+à modifier :
+	- la liste d'exercice est un js et non un json -> faire qqchose pour pouvoir 
+	ajouter les exos générés par genEx dans un seul json et adapter le code pour les lires/
+	selectionner dans ex.js
+	
+	- affichage pour "Vrai / Faux" inline -> pas jolie
+
+	- affichage checkbox quand on génère un ex de type QCM -> pas jolie
+
+	- affichage intitulé pour test ex -> intitulé entre <h1> et <p> -> pk <h1>?
+
+	- affichage intitulé pour test ex -> pas de retour à la ligne -> ne mimic pas la
+	forme du textarea de quand on genère l'exercice
+
+	- ignorer les espaces pour réponse simple
+
+à ajouter :
+	-support d'images?

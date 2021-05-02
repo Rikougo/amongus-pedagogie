@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Test exercices</title>
+        <meta charset="UTF-8" />
+		<link href="style.css" rel="stylesheet" type="text/css">
+		<script type="text/javascript" src="exercices/listeExos.js"></script>
+    </head>
+
+    <body>
+        <div class="input-group">
+			<label for="type">Choix Matière</label>
+			<select id="type" name="type" onclick="menuMatiere(this);">
+				<option>Choisissez une matière</option>
+				<option>Mathématiques</option>
+                <option>Physique-Chimie</option>
+                <option>Histoire</option>
+                <option>Informatique</option>
+                <option>-Autre-</option>
+			</select>
+		</div>
+
+		<div class="input-group">
+			<label for="ListeExos">Choix Exercice</label>
+			<select id="ListeExos" name="ListeExos" onclick="menuExos(this);">
+				
+			</select>
+		</div>
+
+		<div id="intitule">
+
+		</div>
+
+		<div id="reponse">
+
+		</div>
+
+        <script src="ex.js"></script>
+    </body>
+</html>
