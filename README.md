@@ -39,7 +39,7 @@ This project is still in early development, a lot of things may change and/or ar
 Front end part is build on [Angular V11](https://angular.io/), using socket.io-client (despite ngx-socket-io angular module does not seem to work).
 
 ### **Deployment**
-Dockerfiles will generate servers for both the server and the.Server side is a simple node image to run the server, Client side uses of node image to build the Angular app and then copy the result in a Nginx image that will serve those files. A `docker-compose.yml` file at the root combines those two builds and one more Nginx image (with a `nginx.conf` file) to serve all. 
+Dockerfiles will generate servers for both the server and the client side. Server side is a simple node image to run the server, Client side uses of node image to build the Angular app and then copy the result in a Nginx image that will serve those files. A `docker-compose.yml` file at the root combines those two builds and one more Nginx image (with a `nginx.conf` file) to serve all. 
 
 `docker-compose.yml` template :
 ```yml
